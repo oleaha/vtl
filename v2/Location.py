@@ -1,3 +1,5 @@
+import numpy
+
 
 class Location(object):
     """
@@ -13,7 +15,7 @@ class Location(object):
         ((19, 19), (19, 20), (20, 19), (20, 20)),
         ((19, 40), (19, 41), (20, 40), (20, 41))
     ]
-    INITIAL_CAR_POS = (19, 20)
+    INITIAL_CAR_POS = (25, 20)
 
     map = [[0 for j in range(X_SIZE)] for i in range(Y_SIZE)]
     car = ()
@@ -52,15 +54,37 @@ class Location(object):
 
         if not self.check_out_of_bounds(new_pos):
             self.car = new_pos
+            return True
         else:
             # TODO: Do some corrections
             print "Out of bounds!"
+            return False
 
     def check_out_of_bounds(self, pos):
         return self.map[pos[0]][pos[1]] == 0
 
     def check_if_next_pos_is_intersection(self, pos):
         return self.map[pos[0]][pos[1]] == 3
+
+    def closest_intersection(self, distance=False):
+        """
+        Finds the closest intersection based on Euclidean Distance
+        :param distance: Bool
+        :return: distance or coordinates for closest intersection
+        """
+        closest_intersect_dist = 400
+        closest_intersection = ()
+
+        for intersection in self.INTERSECTIONS:
+            for pos in intersection:
+                dist = numpy.linalg.norm(numpy.array(self.car)-numpy.array(pos))
+                if dist < closest_intersect_dist:
+                    closest_intersect_dist = dist
+                    closest_intersection = pos
+
+        if distance:
+            return closest_intersect_dist
+        return closest_intersection
 
     def print_map(self):
         tmp_map = self.initialize_map()
@@ -72,6 +96,9 @@ class Location(object):
 
 loc = Location()
 loc.print_map()
+loc.closest_intersection()
+"""
+loc.print_map()
 loc.update_car_pos("w")
 loc.print_map()
 loc.update_car_pos("w")
@@ -80,3 +107,4 @@ loc.update_car_pos("w")
 loc.print_map()
 loc.update_car_pos("n")
 loc.print_map()
+"""
