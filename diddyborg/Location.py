@@ -118,3 +118,4 @@ class Location(object):
                 inter_id = intersection[2]
                 inter_dir = intersection[3]
         return [min_dist, inter_id, inter_dir, 0]
+
