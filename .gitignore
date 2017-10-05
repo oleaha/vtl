@@ -2,3 +2,6 @@ env/
 .idea/
 uploads/
 ./
+/running
+/uploads
+*__init__.py
