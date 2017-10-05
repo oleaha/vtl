@@ -1,4 +1,4 @@
-import PicoBorgRev
+import diddyborg.PicoBorgRev
 import time
 import sys
 
@@ -7,11 +7,11 @@ class MotorControl(object):
 
     def __init__(self):
         # Set up PicoBorg Reverse
-        self.PBR = PicoBorgRev.PicoBorgRev()
+        self.PBR = diddyborg.PicoBorgRev.PicoBorgRev()
         self.PBR.Init()
 
         if not self.PBR.foundChip:
-            self.boards = PicoBorgRev.ScanForPicoBorgReverse()
+            self.boards = diddyborg.PicoBorgRev.ScanForPicoBorgReverse()
 
             if len(self.boards) == 0:
                 print "No PicoBorg Reverse found, check connection"

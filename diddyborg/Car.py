@@ -1,9 +1,10 @@
-import time as t
 import threading
-import sys
+import time as t
+
 import Location as Loc
 import Network as Net
-import MotorControl as MC
+from v2 import MotorControl as MC
+
 
 class Car(object):
     ME = ''
