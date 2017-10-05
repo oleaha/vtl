@@ -60,6 +60,9 @@ class Location(object):
             print "Out of bounds!"
             return False
 
+    def get_current_car_pos(self):
+        return self.car
+
     def check_out_of_bounds(self, pos):
         return self.map[pos[0]][pos[1]] == 0
 

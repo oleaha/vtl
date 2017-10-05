@@ -1,7 +1,7 @@
 import PicoBorgRev
 import time
-import math
 import sys
+
 
 class MotorControl(object):
 
@@ -25,8 +25,8 @@ class MotorControl(object):
         self.PBR.ResetEpo()
 
         # Movement settings
-        self.timeForwardOneMeter = 7.2
-        self.timeSpinThreeSixty = 6.2
+        self.timeForwardOneMeter = 8.2
+        self.timeSpinThreeSixty = 4.88
         # Power settings
         self.voltageIn = 12.0 # Total battery voltage
         self.voltageOut = 6.0 # Max motor voltage
