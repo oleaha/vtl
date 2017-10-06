@@ -1,6 +1,13 @@
 import numpy
 
 
+class Direction:
+    NORTH = 'n'
+    SOUTH = 's'
+    WEST = 'w'
+    EAST = 'e'
+
+
 class Location(object):
     """
     Map layout constants. Size of map in X and Y  direction.
@@ -60,14 +67,56 @@ class Location(object):
             print "Out of bounds!"
             return False
 
+    def update_car_pos_turn(self, previous_direction, new_direction):
+        new_pos = ()
+        if previous_direction == Direction.SOUTH:
+            if new_direction == Direction.WEST:
+                new_pos = (self.car[0], self.car[1] - 1)
+            else:
+                new_pos = (self.car[0] + 1, self.car[1] + 1)
+        elif previous_direction == Direction.NORTH:
+            if new_direction == Direction.EAST:
+                new_pos = (self.car[0], self.car[1] + 1)
+            else:
+                new_pos = (self.car[0] - 1, self.car[1] - 1)
+        elif previous_direction == Direction.EAST:
+            if new_direction == Direction.NORTH:
+                new_pos = (self.car[0] - 1, self.car[1] + 1)
+            else:
+                new_pos = (self.car[0] + 1, self.car[1])
+        else:  # West
+            if new_direction == Direction.NORTH:
+                new_pos = (self.car[0] - 1, self.car[1])
+            else:
+                new_pos = (self.car[0] + 1, self.car[1] - 1)
+
+        if not self.check_out_of_bounds(new_pos):
+            self.car = new_pos
+            return True
+        else:
+            # TODO: Do some corrections
+            print "Out of bounds!"
+            return False
+
     def get_current_car_pos(self):
         return self.car
 
     def check_out_of_bounds(self, pos):
+        """ Check if position is out of bounds (typically next position)"""
         return self.map[pos[0]][pos[1]] == 0
 
     def check_if_next_pos_is_intersection(self, pos):
+        """ Check if next position is in intersection"""
+        # Why not if pos in self.INTERSECTIONS?
         return self.map[pos[0]][pos[1]] == 3
+
+    def in_intersection(self, pos):
+        """ Check if a position is in an intersection"""
+        for intersection in self.INTERSECTIONS:
+            if pos in intersection:
+                return True
+        return False
+        # return pos in self.INTERSECTIONS
 
     def closest_intersection(self, distance=False):
         """

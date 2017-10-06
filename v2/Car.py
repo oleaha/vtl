@@ -25,7 +25,7 @@ class Car(object):
 
     # Constants
     CAR_IPS = ['192.168.1.6', '192.168.1.7', '192.168.1.12']
-    CAR_INITIAL_POSITIONS = [(1, 20), (19, 0), (40, 0)]
+    CAR_INITIAL_POSITIONS = [(16, 19), (19, 0), (40, 0)]
 
     def __init__(self, car_id):
         self.IP = self.CAR_IPS[car_id - 1]
@@ -35,39 +35,41 @@ class Car(object):
 
     def drive(self):
         while True:
-            # TODO: Also need to check that the last command was not a turn
             if self.LOCATION.closest_intersection(True) == 0:
-                probability = random.uniform(0, 1)
-                direction = self.direction()
+                if not self.LOCATION.in_intersection(self.PREV_POS):
+                    probability = random.uniform(0, 1)
+                    direction = self.direction()
 
-                if direction == Direction.SOUTH:
-                    if probability <= 0.2:
-                        self.quarter_turn(Direction.WEST)
-                    elif probability <= 0.3:
-                        self.quarter_turn(Direction.EAST)
+                    if direction == Direction.SOUTH:
+                        if probability <= 0.8:
+                            self.quarter_turn(Direction.WEST)
+                        elif probability <= 0.98:
+                            self.quarter_turn(Direction.EAST)
+                        else:
+                            self.perform_move(Direction.SOUTH)
+                    elif direction == Direction.NORTH:
+                        if probability <= 0.2:
+                            self.quarter_turn(Direction.WEST)
+                        elif probability <= 0.3:
+                            self.quarter_turn(Direction.EAST)
+                        else:
+                            self.perform_move(Direction.NORTH)
+                    elif direction == Direction.WEST:
+                        if probability <= 0.2:
+                            self.quarter_turn(Direction.NORTH)
+                        elif probability <= 0.3:
+                            self.quarter_turn(Direction.SOUTH)
+                        else:
+                            self.perform_move(Direction.WEST)
                     else:
-                        self.perform_move(Direction.SOUTH)
-                elif direction == Direction.NORTH:
-                    if probability <= 0.2:
-                        self.quarter_turn(Direction.WEST)
-                    elif probability <= 0.3:
-                        self.quarter_turn(Direction.EAST)
-                    else:
-                        self.perform_move(Direction.NORTH)
-                elif direction == Direction.WEST:
-                    if probability <= 0.2:
-                        self.quarter_turn(Direction.NORTH)
-                    elif probability <= 0.3:
-                        self.quarter_turn(Direction.SOUTH)
-                    else:
-                        self.perform_move(Direction.WEST)
+                        if probability <= 0.2:
+                            self.quarter_turn(Direction.NORTH)
+                        elif probability <= 0.3:
+                            self.quarter_turn(Direction.SOUTH)
+                        else:
+                            self.perform_move(Direction.EAST)
                 else:
-                    if probability <= 0.2:
-                        self.quarter_turn(Direction.NORTH)
-                    elif probability <= 0.3:
-                        self.quarter_turn(Direction.SOUTH)
-                    else:
-                        self.perform_move(Direction.EAST)
+                    self.perform_move(self.direction())
             else:
                 # TODO: This should not be hard coded
                 self.perform_move(Direction.SOUTH)
@@ -97,9 +99,11 @@ class Car(object):
             time.sleep(1)
 
     def half_turn(self, direction):
+        self.PREV_POS = self.LOCATION.get_current_car_pos()
         if not self.LOCATION.update_car_pos(direction):
             # TODO: Handle out of bounds
             sys.exit()
+        self.debug_car_info()
         self._perform_spin(-100)
         self._perform_spin(-0.05)
         self._perform_spin(-100)
@@ -109,17 +113,13 @@ class Car(object):
     def quarter_turn(self, direction):
         from_dir = self.direction()
         print "Performing turn, changing direction from " + str(from_dir) + " to " + str(direction)
-        if not self.LOCATION.update_car_pos(direction):
+        self.PREV_POS = self.LOCATION.get_current_car_pos()
+        if not self.LOCATION.update_car_pos_turn(from_dir, direction):
             # TODO: Handle out of bounds
             sys.exit()
+        self.debug_car_info()
         if self.DEBUG:
             time.sleep(1)
-
-        '''
-            If going EAST (coming from WEST) and going NORTH: perform -90 degrees turn (else 90)
-            If going WEST (coming from EAST) and going NORTH: perform 90 degrees turn (else -90)
-            If something is wrong here..   
-        '''
 
         if from_dir == Direction.EAST:
             if direction == Direction.NORTH:
@@ -140,9 +140,11 @@ class Car(object):
 
     def debug_car_info(self):
         self.debug_print("Prev pos: " + str(self.PREV_POS))
-        self.debug_print("Car Position: " + str(self.LOCATION.get_current_car_pos()))
+        self.debug_print("Current Position: " + str(self.LOCATION.get_current_car_pos()))
         self.debug_print("Distance to intersection: " + str(self.LOCATION.closest_intersection(True)))
+        self.debug_print("Direction: " + str(self.direction()))
         self.debug_print(self.LOCATION.print_map())
+        return
 
     def debug_print(self, m):
         if self.DEBUG:
