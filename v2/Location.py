@@ -92,22 +92,18 @@ class Location(object):
     def print_map(self):
         tmp_map = self.initialize_map()
         tmp_map[self.car[0]][self.car[1]] = 8
+
+        # Print map with colors, makes it easier to see for debugging purpose
         for row in tmp_map:
-            print row
+            string = ''
+            for pos in row:
+                if pos == 0:
+                    string += '\033[90m' + str(pos) + '\033[0m '
+                elif pos == 8:
+                    string += '\033[91m' + str(pos) + '\033[0m '
+                elif pos == 1:
+                    string += '\033[92m' + str(pos) + '\033[0m '
+                else:
+                    string += '\033[93m' + str(pos) + '\033[0m '
+            print string
         print "\n"
-
-
-loc = Location()
-loc.print_map()
-loc.closest_intersection()
-"""
-loc.print_map()
-loc.update_car_pos("w")
-loc.print_map()
-loc.update_car_pos("w")
-loc.print_map()
-loc.update_car_pos("w")
-loc.print_map()
-loc.update_car_pos("n")
-loc.print_map()
-"""

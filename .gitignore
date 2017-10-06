@@ -5,3 +5,5 @@ uploads/
 /running
 /uploads
 *__init__.py
+tmp/
+*.pyc
