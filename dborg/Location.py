@@ -1,11 +1,6 @@
 import numpy
-
-
-class Direction:
-    NORTH = 'n'
-    SOUTH = 's'
-    WEST = 'w'
-    EAST = 'e'
+import Intersection
+from Utils import Direction
 
 
 class Location(object):
@@ -24,7 +19,9 @@ class Location(object):
     ]
     INITIAL_CAR_POS = (25, 20)
 
-    map = [[0 for j in range(X_SIZE)] for i in range(Y_SIZE)]
+    map = numpy.array([[0 for j in range(X_SIZE)] for i in range(Y_SIZE)])
+    intersections = []
+    # map = [[0 for j in range(X_SIZE)] for i in range(Y_SIZE)]
     car = ()
 
     def __init__(self, initial_car_position=None):
@@ -32,6 +29,11 @@ class Location(object):
             self.car = initial_car_position
         else:
             self.car = self.INITIAL_CAR_POS
+
+        # Create intersections
+        for intersect in self.INTERSECTIONS:
+            self.intersections.append(Intersection.Intersection(intersect))
+
         self.initialize_map()
 
     def initialize_map(self):
@@ -42,21 +44,21 @@ class Location(object):
         for y_pos in self.ROADS_Y_DIR:
             for x_pos in range(self.Y_SIZE):
                 self.map[x_pos][y_pos] = 1
-        # Add intersections
-        for intersection in self.INTERSECTIONS:
-            for cross in intersection:
-                self.map[cross[0]][cross[1]] = 3
+        # Add intersections to map
+        for intersection in self.intersections:
+            for point in intersection.get_pos():
+                self.map[point] = str(intersection)
         return self.map
 
     def update_car_pos(self, direction):
         new_pos = ()
-        if direction == "n":
+        if direction == Direction.NORTH:
             new_pos = (self.car[0] - 1, self.car[1])  # North: X-1, Y
-        elif direction == "s":
+        elif direction == Direction.SOUTH:
             new_pos = (self.car[0] + 1, self.car[1])  # South: X+1, Y
-        elif direction == "e":
+        elif direction == Direction.EAST:
             new_pos = (self.car[0], self.car[1] + 1)  # East: X+1, Y
-        elif direction == "w":
+        elif direction == Direction.WEST:
             new_pos = (self.car[0], self.car[1] - 1)  # West: X-1, Y
 
         if not self.check_out_of_bounds(new_pos):
@@ -67,25 +69,25 @@ class Location(object):
             print "Out of bounds!"
             return False
 
-    def update_car_pos_turn(self, previous_direction, new_direction):
+    def update_car_pos_turn(self, from_dir, to_dir):
         new_pos = ()
-        if previous_direction == Direction.SOUTH:
-            if new_direction == Direction.WEST:
+        if from_dir == Direction.NORTH:
+            if to_dir == Direction.WEST:
                 new_pos = (self.car[0], self.car[1] - 1)
             else:
                 new_pos = (self.car[0] + 1, self.car[1] + 1)
-        elif previous_direction == Direction.NORTH:
-            if new_direction == Direction.EAST:
-                new_pos = (self.car[0], self.car[1] + 1)
-            else:
+        elif from_dir == Direction.SOUTH:
+            if to_dir == Direction.WEST:
                 new_pos = (self.car[0] - 1, self.car[1] - 1)
-        elif previous_direction == Direction.EAST:
-            if new_direction == Direction.NORTH:
+            else:
+                new_pos = (self.car[0], self.car[1] + 1)
+        elif from_dir == Direction.WEST:
+            if to_dir == Direction.NORTH:
                 new_pos = (self.car[0] - 1, self.car[1] + 1)
             else:
                 new_pos = (self.car[0] + 1, self.car[1])
-        else:  # West
-            if new_direction == Direction.NORTH:
+        elif from_dir == Direction.EAST:
+            if to_dir == Direction.NORTH:
                 new_pos = (self.car[0] - 1, self.car[1])
             else:
                 new_pos = (self.car[0] + 1, self.car[1] - 1)
@@ -103,12 +105,12 @@ class Location(object):
 
     def check_out_of_bounds(self, pos):
         """ Check if position is out of bounds (typically next position)"""
-        return self.map[pos[0]][pos[1]] == 0
+        return self.map[pos] == 0
 
     def check_if_next_pos_is_intersection(self, pos):
         """ Check if next position is in intersection"""
         # Why not if pos in self.INTERSECTIONS?
-        return self.map[pos[0]][pos[1]] == 3
+        return self.map[pos] == 3
 
     def in_intersection(self, pos):
         """ Check if a position is in an intersection"""
@@ -140,7 +142,7 @@ class Location(object):
 
     def print_map(self):
         tmp_map = self.initialize_map()
-        tmp_map[self.car[0]][self.car[1]] = 8
+        tmp_map[self.car] = 8
 
         # Print map with colors, makes it easier to see for debugging purpose
         for row in tmp_map:
