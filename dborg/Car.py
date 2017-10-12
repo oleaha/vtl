@@ -86,14 +86,14 @@ class CarEnhanced(object):
             time.sleep(1)
 
         if self.car['from_dir'] == Direction.SOUTH and self.car['to_dir'] == Direction.WEST:
-            return self._perform_spin(98)
+            return self._perform_spin(-98)
         elif self.car['from_dir'] == Direction.NORTH and self.car['to_dir'] == Direction.WEST:
-            return self._perform_spin(98)
+            return self._perform_spin(-98)
         elif self.car['from_dir'] == Direction.WEST and self.car['to_dir'] == Direction.SOUTH:
-            return self._perform_spin(98)
+            return self._perform_spin(-98)
         elif self.car['from_dir'] == Direction.EAST and self.car['to_dir'] == Direction.NORTH:
-            return self._perform_spin(98)
-        return self._perform_spin(-98)
+            return self._perform_spin(-98)
+        return self._perform_spin(98)
 
     def half_turn(self, direction):
         """
