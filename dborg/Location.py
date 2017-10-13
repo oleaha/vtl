@@ -74,23 +74,31 @@ class Location(object):
         if from_dir == Direction.NORTH:
             if to_dir == Direction.WEST:
                 new_pos = (self.car[0], self.car[1] - 1)
-            else:
+            elif to_dir == Direction.EAST:
                 new_pos = (self.car[0] + 1, self.car[1] + 1)
+            elif to_dir == Direction.SOUTH:
+                new_pos = (self.car[0], self.car[1] - 1)
         elif from_dir == Direction.SOUTH:
             if to_dir == Direction.WEST:
                 new_pos = (self.car[0] - 1, self.car[1] - 1)
-            else:
+            elif to_dir == Direction.EAST:
                 new_pos = (self.car[0], self.car[1] + 1)
+            elif to_dir == Direction.NORTH:
+                new_pos = (self.car[0], self.car[1] + 1)  # Here a turn is made
         elif from_dir == Direction.WEST:
             if to_dir == Direction.NORTH:
                 new_pos = (self.car[0] - 1, self.car[1] + 1)
-            else:
+            elif to_dir == Direction.SOUTH:
+                new_pos = (self.car[0] + 1, self.car[1])
+            elif to_dir == Direction.EAST:
                 new_pos = (self.car[0] + 1, self.car[1])
         elif from_dir == Direction.EAST:
             if to_dir == Direction.NORTH:
                 new_pos = (self.car[0] - 1, self.car[1])
-            else:
+            elif to_dir == Direction.SOUTH:
                 new_pos = (self.car[0] + 1, self.car[1] - 1)
+            elif to_dir == Direction.WEST:
+                new_pos = (self.car[0] - 1, self.car[1])
 
         if not self.check_out_of_bounds(new_pos):
             self.car = new_pos
@@ -105,6 +113,8 @@ class Location(object):
 
     def check_out_of_bounds(self, pos):
         """ Check if position is out of bounds (typically next position)"""
+        if pos[0] < 0 or pos[0] > len(self.map) - 1 or pos[1] < 0 or pos[1] > len(self.map[0]) - 1:
+            return True
         return self.map[pos] == 0
 
     def check_if_next_pos_is_intersection(self, pos):

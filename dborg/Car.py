@@ -1,6 +1,6 @@
 import Location as Location
-import MotorControlMock as Mc
-# import MotorControl as Mc
+#import MotorControlMock as Mc
+import MotorControl as Mc
 import random
 import time
 import sys
@@ -32,6 +32,7 @@ class CarEnhanced(object):
                 # If previous position was in intersection it is safe to assume that we don't need to turn.
                 if not self.LOC.in_intersection(self.car['prev_pos']):
                     probability = random.uniform(0, 1)
+                    print "Probability of turn: " + str(probability * 100)
                     if self.car['to_dir'] == Direction.SOUTH:
                         if probability <= 0.2:
                             self.quarter_turn(Direction.WEST)
@@ -81,6 +82,8 @@ class CarEnhanced(object):
             sys.exit()  # TODO: Handle OoB
 
         self.car['curr_pos'] = self.LOC.get_current_car_pos()
+        self.car['from_dir'] = Direction().inverse_dir(self.car['to_dir'])
+
         self.debug_car_info()
         if self.DEBUG:
             time.sleep(1)
@@ -95,16 +98,22 @@ class CarEnhanced(object):
             return self._perform_spin(-98)
         return self._perform_spin(98)
 
-    def half_turn(self, direction):
+    def half_turn(self):
         """
         Usage: When robot reaches end of road, perform half
         :param direction:
         :return:
         """
         self.car['prev_pos'] = self.LOC.get_current_car_pos()
-        if not self.LOC.update_car_pos(direction):
-            # TODO: Handle out of bounds
+
+        print "Do turn"
+        if not self.LOC.update_car_pos_turn(self.car['to_dir'], self.car['from_dir']):
             sys.exit()
+
+        # Switch from with to
+        self.car['from_dir'], self.car['to_dir'] = self.car['to_dir'], self.car['from_dir']
+        self.car['curr_pos'] = self.LOC.get_current_car_pos()
+
         self.debug_car_info()
         self._perform_spin(-100)
         self._perform_spin(-0.05)
@@ -116,7 +125,7 @@ class CarEnhanced(object):
         self.car['prev_pos'] = self.car['curr_pos']
 
         if not self.LOC.update_car_pos(direction):
-            sys.exit()  # TODO: Handle out of bounds somehow
+            self.half_turn()
 
         self.car['curr_pos'] = self.LOC.get_current_car_pos()
         self.debug_car_info()
@@ -142,7 +151,6 @@ class CarEnhanced(object):
 
     def _perform_spin(self, angle):
         return self.MC.perform_spin(angle)
-
 
 
 class Car(object):
@@ -295,5 +303,5 @@ class Car(object):
         return self.MOTOR_CONTROL.perform_drive(meters)
 
 
-car = CarEnhanced('192.168.1.6', (16, 19), Direction.NORTH, Direction.SOUTH)
+car = CarEnhanced('192.168.1.6', (20, 55), from_dir=Direction.WEST, to_dir=Direction.EAST)
 car.drive()
