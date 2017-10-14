@@ -27,12 +27,14 @@ class CarEnhanced(object):
         self.debug_car_info()
 
     def drive(self):
+        num_iterations = 0
         while True:
+            num_iterations += 1
+            print "Iteration number: " + str(num_iterations)
             if self.LOC.closest_intersection(True) == 0:
                 # If previous position was in intersection it is safe to assume that we don't need to turn.
                 if not self.LOC.in_intersection(self.car['prev_pos']):
                     probability = random.uniform(0, 1)
-                    print "Probability of turn: " + str(probability * 100)
                     if self.car['to_dir'] == Direction.SOUTH:
                         if probability <= 0.2:
                             self.quarter_turn(Direction.WEST)
