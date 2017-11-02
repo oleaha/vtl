@@ -21,11 +21,10 @@ class Compass(object):
         else:
             self.bus = smbus.SMBus(0)
 
+    def get_compass_value(self):
         self._write_byte(0, 0b01110000)
         self._write_byte(1, 0b00100000)
         self._write_byte(2, 0b00000000)
-
-    def get_compass_value(self):
         x = (self._read_word_2c(3) - self.x_offset) * self.scale
         y = (self._read_word_2c(7) - self.y_offset) * self.scale
         return [x, y]
