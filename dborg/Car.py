@@ -13,6 +13,8 @@ class CarEnhanced(object):
     MC = ''
 
     car = {'ip': '', 'curr_pos': (), 'prev_pos': (), 'from_dir': '', 'to_dir': '', 'speed': 0}
+    # key: ip, value: car_object
+    location_table = {}
 
     def __init__(self, ip, pos, from_dir, to_dir):
         self.car['ip'] = ip
@@ -134,6 +136,9 @@ class CarEnhanced(object):
         self._perform_drive(0.1)
         if self.DEBUG:
             time.sleep(1)
+
+    def update_location_table(self, car_object):
+        self.location_table['ip'] = car_object
 
     def debug_car_info(self):
         self.debug_print("Prev pos: " + str(self.car['prev_pos']))
