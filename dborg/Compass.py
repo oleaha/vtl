@@ -3,6 +3,7 @@
 import RPi.GPIO as GPIO
 import smbus
 import time
+import math
 
 
 class Compass():
@@ -27,7 +28,7 @@ class Compass():
 
     def read_word_2c(self, adr):
         val = self.read_word(adr)
-        if (val >= 0x8000):
+        if val >= 0x8000:
             return -((65535 - val) + 1)
         else:
             return val
@@ -46,7 +47,12 @@ class Compass():
         while True:
             x_out = (self.read_word_2c(3) - x_offset) * scale
             y_out = (self.read_word_2c(7) - y_offset) * scale
-            z_out = (self.read_word_2c(5)) * scale
-            print "X: " + str(x_out) + " Y: " + str(y_out)
+
+            heading = 180 * math.atan2(y_out, x_out)/math.pi
+
+            if heading < 0:
+                heading += 360
+
+            print "X: " + str(x_out) + " Y: " + str(y_out) + " Heading: " + str(heading)
             time.sleep(0.2)
             return [x_out, y_out]
