@@ -55,4 +55,7 @@ class Compass():
 
             print "X: " + str(x_out) + " Y: " + str(y_out) + " Heading: " + str(heading)
             time.sleep(0.2)
-            return [x_out, y_out]
+            #return [x_out, y_out]
+
+c = Compass()
+c.get_value()
