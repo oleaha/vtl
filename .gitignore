@@ -8,3 +8,4 @@ uploads/
 tmp/
 *.pyc
 /sandbox
+pos.csv

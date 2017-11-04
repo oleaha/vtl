@@ -1,5 +1,4 @@
 
-
 class Direction:
     NORTH = 'n'
     SOUTH = 's'

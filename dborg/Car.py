@@ -1,6 +1,6 @@
 import Location as Location
-#import MotorControlMock as Mc
-import MotorControl as Mc
+import MotorControlMock as Mc
+#import MotorControl as Mc
 import random
 import time
 import sys
@@ -11,6 +11,13 @@ class CarEnhanced(object):
     DEBUG = True
     LOC = ''
     MC = ''
+
+    QUARTER_SPIN = -98
+    STEP = 0.1
+    HALF_TURN = -180
+    PROBABILITIES = {'left': 0.2, 'right': 0.4}
+
+    POS_HISTORY = []
 
     car = {'ip': '', 'curr_pos': (), 'prev_pos': (), 'from_dir': '', 'to_dir': '', 'speed': 0}
     # key: ip, value: car_object
@@ -29,39 +36,36 @@ class CarEnhanced(object):
         self.debug_car_info()
 
     def drive(self):
-        num_iterations = 0
         while True:
-            num_iterations += 1
-            print "Iteration number: " + str(num_iterations)
             if self.LOC.closest_intersection(True) == 0:
                 # If previous position was in intersection it is safe to assume that we don't need to turn.
                 if not self.LOC.in_intersection(self.car['prev_pos']):
                     probability = random.uniform(0, 1)
                     if self.car['to_dir'] == Direction.SOUTH:
-                        if probability <= 0.2:
+                        if probability <= self.PROBABILITIES['left']:
                             self.quarter_turn(Direction.WEST)
-                        elif probability <= 0.3:
+                        elif probability <= self.PROBABILITIES['right']:
                             self.quarter_turn(Direction.EAST)
                         else:
                             self.drive_straight(Direction.SOUTH)
                     elif self.car['to_dir'] == Direction.NORTH:
-                        if probability <= 0.2:
+                        if probability <= self.PROBABILITIES['left']:
                             self.quarter_turn(Direction.WEST)
-                        elif probability <= 0.3:
+                        elif probability <= self.PROBABILITIES['right']:
                             self.quarter_turn(Direction.EAST)
                         else:
                             self.drive_straight(Direction.NORTH)
                     elif self.car['to_dir'] == Direction.WEST:
-                        if probability <= 0.2:
+                        if probability <= self.PROBABILITIES['left']:
                             self.quarter_turn(Direction.NORTH)
-                        elif probability <= 0.3:
+                        elif probability <= self.PROBABILITIES['right']:
                             self.quarter_turn(Direction.SOUTH)
                         else:
                             self.drive_straight(Direction.WEST)
                     else:
-                        if probability <= 0.2:
+                        if probability <= self.PROBABILITIES['left']:
                             self.quarter_turn(Direction.NORTH)
-                        elif probability <= 0.3:
+                        elif probability <= self.PROBABILITIES['right']:
                             self.quarter_turn(Direction.SOUTH)
                         else:
                             self.drive_straight(Direction.EAST)
@@ -76,16 +80,12 @@ class CarEnhanced(object):
         is currently going to, since this is basically what we change in this operation.
         """
         self.car['to_dir'] = new_dir
-        self.car['prev_pos'] = self.car['curr_pos']
 
-        self.debug_print("Performing quarter turn, coming from: "
-                         + str(self.car['from_dir'] + " and turning: "
-                               + str(self.car['to_dir'])))
-
+        self.update_previous_pos()
         if not self.LOC.update_car_pos_turn(self.car['from_dir'], self.car['to_dir']):
-            sys.exit()  # TODO: Handle OoB
+            sys.exit()
+        self.update_current_pos()
 
-        self.car['curr_pos'] = self.LOC.get_current_car_pos()
         self.car['from_dir'] = Direction().inverse_dir(self.car['to_dir'])
 
         self.debug_car_info()
@@ -93,32 +93,31 @@ class CarEnhanced(object):
             time.sleep(1)
 
         if self.car['from_dir'] == Direction.SOUTH and self.car['to_dir'] == Direction.WEST:
-            return self._perform_spin(-98)
+            return self._perform_spin(self.QUARTER_SPIN)
         elif self.car['from_dir'] == Direction.NORTH and self.car['to_dir'] == Direction.WEST:
-            return self._perform_spin(-98)
+            return self._perform_spin(self.QUARTER_SPIN)
         elif self.car['from_dir'] == Direction.WEST and self.car['to_dir'] == Direction.SOUTH:
-            return self._perform_spin(-98)
+            return self._perform_spin(self.QUARTER_SPIN)
         elif self.car['from_dir'] == Direction.EAST and self.car['to_dir'] == Direction.NORTH:
-            return self._perform_spin(-98)
-        return self._perform_spin(98)
+            return self._perform_spin(self.QUARTER_SPIN)
+        return self._perform_spin(-self.QUARTER_SPIN)  # Should be positive
 
     def half_turn(self):
         """
-        Usage: When robot reaches end of road, perform half
+        Usage: When robot reaches end of road, perform half turn
         :param direction:
         :return:
         """
-        self.car['prev_pos'] = self.LOC.get_current_car_pos()
-
-        print "Do turn"
+        self.update_previous_pos()
         if not self.LOC.update_car_pos_turn(self.car['to_dir'], self.car['from_dir']):
             sys.exit()
+        self.update_current_pos()
 
         # Switch from with to
         self.car['from_dir'], self.car['to_dir'] = self.car['to_dir'], self.car['from_dir']
-        self.car['curr_pos'] = self.LOC.get_current_car_pos()
 
         self.debug_car_info()
+        # Spin 180
         self._perform_spin(-100)
         self._perform_spin(-0.05)
         self._perform_spin(-100)
@@ -126,16 +125,25 @@ class CarEnhanced(object):
             time.sleep(1)
 
     def drive_straight(self, direction):
-        self.car['prev_pos'] = self.car['curr_pos']
 
+        self.update_previous_pos()
         if not self.LOC.update_car_pos(direction):
             self.half_turn()
+        self.update_current_pos()
 
-        self.car['curr_pos'] = self.LOC.get_current_car_pos()
         self.debug_car_info()
+
         self._perform_drive(0.1)
+
         if self.DEBUG:
             time.sleep(1)
+
+    def update_previous_pos(self):
+        self.car['prev_pos'] = self.car['curr_pos']
+
+    def update_current_pos(self):
+        self.POS_HISTORY.append(self.car['curr_pos'])
+        self.car['curr_pos'] = self.LOC.get_current_car_pos()
 
     def update_location_table(self, car_object):
         self.location_table['ip'] = car_object
@@ -147,6 +155,7 @@ class CarEnhanced(object):
         self.debug_print("To Direction: " + str(self.car['to_dir']))
         self.debug_print("From direction: " + str(self.car['from_dir']))
         self.debug_print(self.LOC.print_map())
+        print self.car['curr_pos']
         return
 
     def debug_print(self, m):
@@ -310,5 +319,5 @@ class Car(object):
         return self.MOTOR_CONTROL.perform_drive(meters)
 
 
-car = CarEnhanced('192.168.1.6', (20, 55), from_dir=Direction.WEST, to_dir=Direction.EAST)
+car = CarEnhanced('192.168.1.6', (19, 48), from_dir=Direction.EAST, to_dir=Direction.WEST)
 car.drive()
