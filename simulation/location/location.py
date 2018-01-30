@@ -2,6 +2,7 @@ from simulation.environment.map import Map
 from simulation.utils.direction import Direction
 import numpy
 
+
 class Location:
 
     car = ()
@@ -15,19 +16,19 @@ class Location:
     def update_car_pos(self, dir):
         next_pos = ()
         if dir == Direction.NORTH:
-            new_pos = (self.car[0] - 1, self.car[1])  # North: X-1, Y
+            next_pos = (self.car[0] - 1, self.car[1])  # North: X-1, Y
         elif dir == Direction.SOUTH:
-            new_pos = (self.car[0] + 1, self.car[1])  # South: X+1, Y
+            next_pos = (self.car[0] + 1, self.car[1])  # South: X+1, Y
         elif dir == Direction.EAST:
-            new_pos = (self.car[0], self.car[1] + 1)  # East: X, Y+1
+            next_pos = (self.car[0], self.car[1] + 1)  # East: X, Y+1
         elif dir == Direction.WEST:
-            new_pos = (self.car[0], self.car[1] - 1)  # West: X, Y-1
+            next_pos = (self.car[0], self.car[1] - 1)  # West: X, Y-1
 
-        if self.check_out_of_bounds(new_pos):
-            print "OOB: " + str(new_pos)
+        if self.check_out_of_bounds(next_pos):
+            print "OOB: " + str(next_pos)
             return False
 
-        self.car = new_pos
+        self.car = next_pos
         return True
 
     def check_out_of_bounds(self, pos):
@@ -36,20 +37,21 @@ class Location:
     def get_car_pos(self):
         return self.car
 
+    """ Check if a given position is in an intersection """
     def in_intersection(self, pos):
-        """ Check if a given position is in an intersection """
         for intersection in self.intersections:
             if pos in intersection:
                 return True
         return False
 
+    """ Check if a position is in an intersection """
     def is_next_pos_in_intersection(self, pos):
-        """ Check if a position is in an intersection """
         # TODO: Old version: return self.map[pos] == 3
         return pos in self.intersections
 
+    """ Find the closest intersection based on Euclidean Distance"""
     def closest_intersection(self, distance=False):
-        """ Find the closest intersection based on Euclidean Distance"""
+
         closest_dist = 400
         closest_intersection = ()
 

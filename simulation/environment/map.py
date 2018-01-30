@@ -40,5 +40,20 @@ class Map:
     def update_map_pos(self, pos, value):
         self.map[pos[1]][pos[2]] = value
 
-    def __str__(self):
-        pass
+    def print_map(self, car_pos):
+        # Make a copy of the map
+        map = self.map[:]
+        map[car_pos] = 8
+        for row in map:
+            string = ''
+            for pos in row:
+                if pos == 0:
+                    string += '\033[90m' + str(pos) + '\033[0m '
+                elif pos == 8:
+                    string += '\033[91m' + str(pos) + '\033[0m '
+                elif pos == 1:
+                    string += '\033[92m' + str(pos) + '\033[0m '
+                else:
+                    string += '\033[93m' + str(pos) + '\033[0m '
+            print string
+        print "\n"

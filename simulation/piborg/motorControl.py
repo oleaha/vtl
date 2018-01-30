@@ -1,7 +1,6 @@
-import sys
+import PicoBorgRev
 import time
-
-from simulation.piborg import PicoBorgRev
+import sys
 
 
 class MotorControl(object):
