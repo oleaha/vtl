@@ -58,5 +58,7 @@ class Map:
                     string += '\033[92m' + str(pos) + '\033[0m '
                 else:
                     string += '\033[93m' + str(pos) + '\033[0m '
-            print string
-        print "\n"
+            with open('test.txt', 'a') as myfile:
+                myfile.write(string+"\n")
+                myfile.close()
+

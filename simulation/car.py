@@ -23,12 +23,13 @@ class Car:
         self.car['to_dir'] = to_dir
         self.car['from_dir'] = from_dir
         # Thread logger
-        logging.basicConfig(level=logging.DEBUG,
-                            format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] %(message)s')
+        logging.basicConfig(level=logging.INFO,
+                            format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s')
         logging.debug("car.py started")
 
         # Initialize location module
         self.LOC = Location(self.car['curr_pos'])
+        #self.LOC.map.print_map(pos)
         self.MC = MotorControl()
 
         self.plan = Queue.Queue()
@@ -40,7 +41,7 @@ class Car:
             if self.plan.qsize() > 5:
                 #logging.debug("Command: " + str(self.plan.get()))
                 self.plan.get()
-                time.sleep(0.1)
+                #time.sleep(0.1)
 
 
                 #self.PLANNER.stop_thread()

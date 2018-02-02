@@ -4,7 +4,6 @@ from simulation.utils.direction import Direction
 from simulation import settings
 import logging
 import random
-import Queue
 
 
 class Planner(threading.Thread):
@@ -21,6 +20,7 @@ class Planner(threading.Thread):
         self.route = []
 
         # Car variables
+        self.prev_pos = position
         self.position = position
         self.to_dir = to_dir
 
@@ -37,10 +37,13 @@ class Planner(threading.Thread):
         while not self.exitFlag:
             if self.plan.qsize() < 6:
                 self.calculate_next_step()
+                logging.info(str(self.position[0]) + "," + str(self.position[1]))
+                # self.LOC.map.print_map(self.position)
 
     def calculate_next_step(self):
         logging.debug("Calculating next step")
-        if self.LOC.in_intersection(self.position):
+        # Only turn in intersection if the previous position was not in an intersection
+        if self.LOC.in_intersection(self.position) and not self.LOC.in_intersection(self.prev_pos):
             prob = random.uniform(0, 1)
             logging.debug("Car in intersection at " + str(self.position) + " probability " + str(prob))
 
@@ -80,6 +83,7 @@ class Planner(threading.Thread):
             {'command': 'quarter turn', 'next_pos': new_pos, 'to_dir': direction,
              'from_dir': self.to_dir})
 
+        self.prev_pos = self.position
         self.position = new_pos
         self.to_dir = direction
         return
@@ -88,24 +92,28 @@ class Planner(threading.Thread):
         new_pos = self.LOC.update_car_pos(direction)
 
         if new_pos == self.position:
-            # TODO: Handle out of bounds
             logging.debug("new pos is out-of-bounds, rejecting pos")
             self.handle_out_of_bounds()
             return
 
-        logging.debug("drive straight, new pos " + str(new_pos))
+        logging.debug("new pos is now " + str(new_pos))
 
         self.plan.put(
             {'command': 'straight', 'next_pos': new_pos, 'to_dir': direction,
              'from_dir': Direction().inverse_dir(direction)})
+
+        self.prev_pos = self.position
         self.position = new_pos
         self.to_dir = direction
+
         return
 
     def handle_out_of_bounds(self):
         # TODO: Assuming end of map
         # Set the inverse direction as new direction
-        self.LOC.update_car_pos_turn(from_dir=self.to_dir, to_dir=Direction().inverse_dir(self.to_dir))
+        new_pos = self.LOC.update_car_pos_turn(to_dir=self.to_dir, new_to_dir=Direction().inverse_dir(self.to_dir))
+        self.to_dir = Direction().inverse_dir(self.to_dir)
+        self.position = new_pos
 
     def stop_thread(self):
         self.exitFlag = True
