@@ -5,7 +5,7 @@ from simulation.planner.planner import Planner
 
 import logging
 import time
-
+import Queue
 
 class Car:
 
@@ -23,18 +23,27 @@ class Car:
         self.car['to_dir'] = to_dir
         self.car['from_dir'] = from_dir
         # Thread logger
-        logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
+        logging.basicConfig(level=logging.DEBUG,
+                            format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] %(message)s')
         logging.debug("car.py started")
 
         # Initialize location module
         self.LOC = Location(self.car['curr_pos'])
         self.MC = MotorControl()
 
-        self.PLANNER = Planner(1, "Planner", self.LOC, self)
+        self.plan = Queue.Queue()
+
+        self.PLANNER = Planner(1, "Planner", self.car['curr_pos'], self.car['to_dir'], self.plan)
         self.PLANNER.start()
 
-        time.sleep(5)
-        self.PLANNER.stop_thread()
+        while True:
+            if self.plan.qsize() > 5:
+                #logging.debug("Command: " + str(self.plan.get()))
+                self.plan.get()
+                time.sleep(0.1)
 
 
-c = Car('192.168.1.1.', (12, 24), 'e', 'w')
+                #self.PLANNER.stop_thread()
+
+
+c = Car('192.168.1.1.', (19, 19), 'e', 'w')

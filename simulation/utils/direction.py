@@ -5,12 +5,12 @@ class Direction:
     WEST = 'w'
     EAST = 'e'
 
-    def inverse_dir(self, dir):
-        if dir == self.NORTH:
+    def inverse_dir(self, direction):
+        if direction == self.NORTH:
             return self.SOUTH
-        elif dir == self.SOUTH:
+        elif direction == self.SOUTH:
             return self.NORTH
-        elif dir == self.WEST:
+        elif direction == self.WEST:
             return self.EAST
-        elif dir == self.EAST:
+        elif direction == self.EAST:
             return self.WEST

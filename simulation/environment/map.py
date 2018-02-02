@@ -37,6 +37,9 @@ class Map:
     def get_map(self):
         return self.map
 
+    def get_intersections(self):
+        return self.intersections
+
     def update_map_pos(self, pos, value):
         self.map[pos[1]][pos[2]] = value
 

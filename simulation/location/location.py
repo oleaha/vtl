@@ -1,12 +1,12 @@
 from simulation.environment.map import Map
 from simulation.utils.direction import Direction
 import numpy
-
+import logging
+from simulation import settings
 
 class Location:
 
     car = ()
-    intersections = []
     map = ()
 
     def __init__(self, initial_car_position):
@@ -15,6 +15,8 @@ class Location:
 
     def update_car_pos(self, dir):
         next_pos = ()
+        old_pos = self.car
+
         if dir == Direction.NORTH:
             next_pos = (self.car[0] - 1, self.car[1])  # North: X-1, Y
         elif dir == Direction.SOUTH:
@@ -24,30 +26,66 @@ class Location:
         elif dir == Direction.WEST:
             next_pos = (self.car[0], self.car[1] - 1)  # West: X, Y-1
 
+        # If the new position is out of bounds, return its current position
         if self.check_out_of_bounds(next_pos):
-            print "OOB: " + str(next_pos)
-            return False
+            return old_pos
 
         self.car = next_pos
-        return True
+        return self.car
+
+    def update_car_pos_turn(self, from_dir, to_dir):
+        next_pos = ()
+
+        if from_dir == Direction.NORTH:
+            if to_dir == Direction.WEST:
+                next_pos = (self.car[0], self.car[1] - 1)
+            elif to_dir == Direction.EAST:
+                next_pos = (self.car[0] + 1, self.car[1] + 1)
+            elif to_dir == Direction.SOUTH:
+                next_pos = (self.car[0], self.car[1] - 1)
+        elif from_dir == Direction.SOUTH:
+            if to_dir == Direction.WEST:
+                next_pos = (self.car[0] - 1, self.car[1] - 1)
+            elif to_dir == Direction.EAST:
+                next_pos = (self.car[0], self.car[1] + 1)
+            elif to_dir == Direction.NORTH:
+                next_pos = (self.car[0], self.car[1] + 1)  # TODO: Possible mistake here
+        elif from_dir == Direction.WEST:
+            if to_dir == Direction.NORTH:
+                next_pos = (self.car[0] - 1, self.car[1] + 1)
+            elif to_dir == Direction.SOUTH:
+                next_pos = (self.car[0] + 1, self.car[1])
+            elif to_dir == Direction.EAST:
+                next_pos = (self.car[0] + 1, self.car[1])
+        elif from_dir == Direction.EAST:
+            if to_dir == Direction.NORTH:
+                next_pos = (self.car[0] - 1, self.car[1])
+            elif to_dir == Direction.SOUTH:
+                next_pos = (self.car[0] + 1, self.car[1] - 1)
+            elif to_dir == Direction.WEST:
+                next_pos = (self.car[0] - 1, self.car[1])
+
+        logging.debug("update_car_pos_turn: next pos: " + str(next_pos))
+        self.car = next_pos
+        return self.car
 
     def check_out_of_bounds(self, pos):
-        pass
+        logging.debug("POS " + str(pos))
+        if pos[0] < 0 or pos[0] > settings.MAP_SIZE_Y - 1 or pos[1] < 0 or pos[1] > settings.MAP_SIZE_X - 1:
+            return True
+        return self.map.get_map()[pos] == 0
 
     def get_car_pos(self):
         return self.car
 
     """ Check if a given position is in an intersection """
     def in_intersection(self, pos):
-        for intersection in self.intersections:
-            if pos in intersection:
-                return True
-        return False
+        return self.map.get_map()[pos] == 3
 
     """ Check if a position is in an intersection """
     def is_next_pos_in_intersection(self, pos):
         # TODO: Old version: return self.map[pos] == 3
-        return pos in self.intersections
+        return pos in self.map.get_intersections()
 
     """ Find the closest intersection based on Euclidean Distance"""
     def closest_intersection(self, distance=False):
@@ -55,7 +93,7 @@ class Location:
         closest_dist = 400
         closest_intersection = ()
 
-        for intersection in self.intersections:
+        for intersection in self.map.get_intersections():
             for pos in intersection:
                 distance = numpy.linalg.norm(numpy.array(self.car) - numpy.array(pos))
                 if distance < closest_dist:
