@@ -43,3 +43,52 @@ class TestLocation(TestCase):
         location = Location((0, 20))
         location.update_car_pos(dir=Direction.NORTH)
         assert location.get_car_pos() == (0, 20)
+
+    def test_oob_move_out_of_road(self):
+        location = Location((0, 20))
+        location.update_car_pos(dir=Direction.EAST)
+        assert location.get_car_pos() == (0, 20)
+
+    def test_in_intersection(self):
+        location = Location((19, 19))
+        assert location.in_intersection((19, 19))
+
+    def test_is_next_pos_in_intersection(self):
+        location = Location((19, 21))
+        assert location.is_next_pos_in_intersection((19, 20))
+
+    def test_turn_north_to_west(self):
+        pass
+
+    def test_turn_north_to_east(self):
+        pass
+
+    def test_turn_north_to_south(self):
+        pass
+
+    def test_turn_south_to_west(self):
+        pass
+
+    def test_turn_south_to_east(self):
+        pass
+
+    def test_turn_south_to_north(self):
+        pass
+
+    def test_turn_west_to_north(self):
+        pass
+
+    def test_turn_west_to_south(self):
+        pass
+
+    def test_turn_west_to_east(self):
+        pass
+
+    def test_turn_east_to_north(self):
+        pass
+
+    def test_turn_east_to_south(self):
+        pass
+
+    def test_turn_east_to_west(self):
+        pass

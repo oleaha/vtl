@@ -89,8 +89,7 @@ class Location:
 
     """ Check if a position is in an intersection """
     def is_next_pos_in_intersection(self, pos):
-        # TODO: Old version: return self.map[pos] == 3
-        return pos in self.map.get_intersections()
+        return self.map.get_map()[pos] == 3
 
     """ Find the closest intersection based on Euclidean Distance"""
     def closest_intersection(self, distance=False):
