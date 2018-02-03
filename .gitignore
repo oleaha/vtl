@@ -8,3 +8,5 @@ tmp/
 *.pyc
 /sandbox
 pos.csv
+log.txt
+test.txt

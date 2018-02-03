@@ -4,8 +4,8 @@ from simulation.piborg.motorControlMock import MotorControl
 from simulation.planner.planner import Planner
 
 import logging
-import time
 import Queue
+
 
 class Car:
 
@@ -24,7 +24,8 @@ class Car:
         self.car['from_dir'] = from_dir
         # Thread logger
         logging.basicConfig(level=logging.INFO,
-                            format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s')
+                            format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s',
+                            filename="log.txt")
         logging.debug("car.py started")
 
         # Initialize location module
