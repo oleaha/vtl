@@ -4,6 +4,7 @@ import numpy
 import logging
 from simulation import settings
 
+
 class Location:
 
     car = ()

@@ -10,3 +10,4 @@ tmp/
 pos.csv
 log.txt
 test.txt
+.pytest_cache
