@@ -14,3 +14,17 @@ INTERSECTIONS = [
 ]
 
 PROBABILITIES = {'left': 0.2, 'right': 0.4}
+
+
+"""
+NETWORK SETTINGS
+
+For localhost testing use IP 127.0.0.1 and port 5005. 
+You can then catch the message by running nc -ul 127.0.0.1 5005 in terminal
+
+https://www.sans.org/security-resources/sec560/netcat_cheat_sheet_v1.pdf
+"""
+
+# Network settings
+BROADCAST_IP = "127.0.0.1"
+BROADCAST_PORT = 5005
