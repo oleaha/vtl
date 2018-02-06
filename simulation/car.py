@@ -41,16 +41,14 @@ class Car:
         self.PLANNER.start()
 
         # Initialize network module
-        self.beacon_thread = threading.Thread(target=self.send_beacon())  # TODO: No sure if this is the best solution
+        self.beacon_thread = threading.Thread(target=self.send_beacon)  # TODO: No sure if this is the best solution
         self.beacon_thread.start()
-
 
         while True:
             if self.plan.qsize() > 5:
-                #logging.debug("Command: " + str(self.plan.get()))
+                self.car = self.plan.get()
+                logging.debug("Command: " + str(self.car))
                 time.sleep(1)
-
-
                 #self.PLANNER.stop_thread()
 
     def send_beacon(self):
