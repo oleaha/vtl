@@ -3,6 +3,7 @@ from simulation.location.location import Location
 from simulation.piborg.motorControlMock import MotorControl
 from simulation.planner.planner import Planner
 from simulation.network.send import Send
+from simulation.network.receive import Receive
 import settings
 
 import logging
@@ -45,8 +46,12 @@ class Car:
         self.PLANNER.start()
 
         # Initialize network module and send beacon method
-        self.beacon_thread = threading.Thread(target=self.send_beacon)  # TODO: No sure if this is the best solution
+        self.beacon_thread = threading.Thread(target=self.send_beacon, name="Send Beacon")  # TODO: No sure if this is the best solution
         self.beacon_thread.start()
+
+        # Initialize network receive message module
+        self.receive_thread = threading.Thread(target=self.receive, name="Receive")
+        self.receive_thread.start()
 
         while True:
             if self.plan.qsize() > 5:
@@ -64,6 +69,13 @@ class Car:
             logging.debug("Sending beacon")
             send.send(json.dumps(self.car))
             time.sleep(settings.BROADCAST_STEP)
+
+    def receive(self):
+        receive = Receive()
+        while True:
+            msg = receive.listen()
+            logging.debug("Message received - " + str(json.loads(msg[0])))
+            self.location_table['1'] = msg
 
 
 c = Car('192.168.1.1.', (19, 19), 'e', 'w')
