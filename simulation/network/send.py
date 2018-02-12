@@ -24,8 +24,3 @@ class Send:
 
     def close(self):
         self.socket.close()
-
-
-#s = Send(broadcast=True)
-#s.send("Testing")
-#s.close()

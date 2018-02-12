@@ -38,13 +38,13 @@ class Planner(threading.Thread):
             if self.plan.qsize() < 6:
                 self.calculate_next_step()
                 logging.info(str(self.position[0]) + "," + str(self.position[1]))
-                # self.LOC.map.print_map(self.position)
 
     def calculate_next_step(self):
         logging.debug("Calculating next step")
         # Only turn in intersection if the previous position was not in an intersection
         if self.LOC.in_intersection(self.position) and not self.LOC.in_intersection(self.prev_pos):
             prob = random.uniform(0, 1)
+
             logging.debug("Car in intersection at " + str(self.position) + " probability " + str(prob))
 
             if self.to_dir == Direction.SOUTH:
@@ -86,7 +86,6 @@ class Planner(threading.Thread):
         self.prev_pos = self.position
         self.position = new_pos
         self.to_dir = direction
-        return
 
     def drive_straight(self, direction):
         new_pos = self.LOC.update_car_pos(direction)
@@ -105,8 +104,6 @@ class Planner(threading.Thread):
         self.prev_pos = self.position
         self.position = new_pos
         self.to_dir = direction
-
-        return
 
     def handle_out_of_bounds(self):
         # TODO: Assuming end of map

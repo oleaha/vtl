@@ -3,6 +3,7 @@ from simulation.location.location import Location
 from simulation.piborg.motorControlMock import MotorControl
 from simulation.planner.planner import Planner
 from simulation.network.send import Send
+import settings
 
 import logging
 import Queue
@@ -25,6 +26,7 @@ class Car:
         self.car['prev_pos'] = pos
         self.car['to_dir'] = to_dir
         self.car['from_dir'] = from_dir
+
         # Thread logger
         logging.basicConfig(level=logging.DEBUG,
                             format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s',
@@ -33,14 +35,16 @@ class Car:
 
         # Initialize location module
         self.LOC = Location(self.car['curr_pos'])
+        # Initialize motor control module
         self.MC = MotorControl()
 
-        # Initialize and start planner module
+        # Create a queue for commands planned by the planner
         self.plan = Queue.Queue()
+        # Initialize and start planner
         self.PLANNER = Planner(1, "Planner", self.car['curr_pos'], self.car['to_dir'], self.plan)
         self.PLANNER.start()
 
-        # Initialize network module
+        # Initialize network module and send beacon method
         self.beacon_thread = threading.Thread(target=self.send_beacon)  # TODO: No sure if this is the best solution
         self.beacon_thread.start()
 
@@ -48,15 +52,18 @@ class Car:
             if self.plan.qsize() > 5:
                 self.car = self.plan.get()
                 logging.debug("Command: " + str(self.car))
-                time.sleep(1)
-                #self.PLANNER.stop_thread()
+                time.sleep(1)  # TODO: The time will depend on current command.
+                # TODO: Implement MotorControl
 
     def send_beacon(self):
+        """
+        Sends a beacon broadcast message every with car info every x seconds.
+        """
         send = Send(broadcast=True)
         while True:
             logging.debug("Sending beacon")
             send.send(json.dumps(self.car))
-            time.sleep(1)
+            time.sleep(settings.BROADCAST_STEP)
 
 
 c = Car('192.168.1.1.', (19, 19), 'e', 'w')
