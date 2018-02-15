@@ -1,20 +1,22 @@
 import socket
 import logging
 from simulation import settings
+import json
 
 
 class Receive:
 
-    def __init__(self):
+    def __init__(self, ip):
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            self.socket.bind((settings.BROADCAST_IP, settings.BROADCAST_PORT))
-        except socket.error:
-            logging.error("Could not create socket, error: " + str(socket.error))
+            self.socket.bind((ip, settings.BROADCAST_PORT))
+
+        except socket.error, msg:
+            logging.error("Could not create socket, error: " + str(msg))
 
     def listen(self):
         logging.debug("Listening...")
-        return self.socket.recvfrom(1024)
+        return json.loads(self.socket.recvfrom(1024)[0])
 
     def close(self):
         self.socket.close()

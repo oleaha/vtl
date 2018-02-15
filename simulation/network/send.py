@@ -1,7 +1,7 @@
 import socket, sys
 from simulation import settings
 import logging
-
+import json
 
 class Send:
 
@@ -17,11 +17,11 @@ class Send:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         except socket.error:
-            logging.error("Could not create socket, error: " + str(socket.error))
+            logging.error("Could not create socket, error: " + str(socket.error.message))
 
     def send(self, msg):
         try:
-            self.socket.sendto(msg, (self.ip, self.port))
+            self.socket.sendto(json.dumps(msg), (self.ip, self.port))
         except socket.error:
             logging.error("Could not send message")
 

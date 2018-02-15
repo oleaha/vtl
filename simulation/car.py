@@ -1,3 +1,8 @@
+import sys
+import os
+sys.path.append(os.getcwd())
+
+
 from simulation.location.location import Location
 #from simulation.piborg.motorControl import MotorControl
 from simulation.piborg.motorControlMock import MotorControl
@@ -55,10 +60,12 @@ class Car:
 
         while True:
             if self.plan.qsize() > 5:
-                self.car = self.plan.get()
-                logging.debug("Command: " + str(self.car))
+                # TODO: self.plan.get does not include
+                self.next_command = self.plan.get()
+                logging.debug("Command: " + str(self.next_command))
                 time.sleep(1)  # TODO: The time will depend on current command.
-                # TODO: Implement MotorControl
+
+                # TODO: Implement MotorControl and update self.car
 
     def send_beacon(self):
         """
@@ -67,15 +74,22 @@ class Car:
         send = Send(broadcast=True)
         while True:
             logging.debug("Sending beacon")
-            send.send(json.dumps(self.car))
+            send.send(self.car)
             time.sleep(settings.BROADCAST_STEP)
 
     def receive(self):
-        receive = Receive()
+        receive = Receive(self.car['ip'])
         while True:
             msg = receive.listen()
-            logging.debug("Message received - " + str(json.loads(msg[0])))
-            self.location_table['1'] = msg
+            logging.info("Message received")
+
+            # Throw away updates from yourself
+            if not self.car['ip'] == msg['ip']:
+                self.location_table[msg['ip']] = msg
+                logging.info("Updated location table " + str(self.location_table))
 
 
-c = Car('192.168.1.1.', (19, 19), 'e', 'w')
+if len(sys.argv) > 1:
+    c = Car(str(sys.argv[1]), (19, 19), 'e', 'w')
+else:
+    c = Car('192.168.1.1', (19, 19), 'e', 'w')

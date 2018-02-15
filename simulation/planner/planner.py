@@ -111,6 +111,7 @@ class Planner(threading.Thread):
         new_pos = self.LOC.update_car_pos_turn(to_dir=self.to_dir, new_to_dir=Direction().inverse_dir(self.to_dir))
         self.to_dir = Direction().inverse_dir(self.to_dir)
         self.position = new_pos
+        # TODO: Where is the new command?
 
     def stop_thread(self):
         self.exitFlag = True
