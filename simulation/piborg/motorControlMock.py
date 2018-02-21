@@ -6,13 +6,13 @@ class MotorControl(object):
     def __init__(self):
         return
 
-    def perform_move(self, drive_left, drive_right, num_seconds):
+    def perform_move(self, drive_left=None, drive_right=None, num_seconds=None):
         time.sleep(2)
         return
 
     # Sin an angle in degrees
     def perform_spin(self, angle):
-        return
+        return self.perform_move()
 
     def perform_drive(self, meters):
-        return
+        return self.perform_move()

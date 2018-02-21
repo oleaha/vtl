@@ -10,6 +10,7 @@ from simulation.planner.planner import Planner
 from simulation.network.send import Send
 from simulation.network.receive import Receive
 import settings
+from simulation.utils.direction import Direction
 
 import logging
 import Queue
@@ -32,6 +33,7 @@ class Car:
         self.car['prev_pos'] = pos
         self.car['to_dir'] = to_dir
         self.car['from_dir'] = from_dir
+        self.next_command = None
 
         # Thread logger
         logging.basicConfig(level=logging.INFO,
@@ -60,12 +62,44 @@ class Car:
 
         while True:
             if self.plan.qsize() > 5:
-                # TODO: self.plan.get does not include
-                self.next_command = self.plan.get()
-                logging.info("Command: " + str(self.next_command))
-                time.sleep(1)  # TODO: The time will depend on current command.
+                self.execute_command()
+                logging.info("---------")
 
-                # TODO: Implement MotorControl and update self.car
+    def execute_command(self):
+        self.next_command = self.plan.get()
+        logging.error("Next command to execute: " + str(self.next_command))
+
+        if self.next_command['command'] == "straight":
+            logging.error("Executing straight command")
+            self.MC.perform_drive(0.2)
+        elif self.next_command['command'] == "quarter_turn":
+            logging.error("Executing quarter turn command")
+            self.MC.perform_spin(self.calculate_quarter_spin_degree())
+        elif self.next_command['command'] == "half_turn":
+            logging.error("Executing half turn command")
+            self.MC.perform_spin(settings.HALF_TURN_DEGREES)
+
+    # TODO: Refactor to UTILS
+    def calculate_quarter_spin_degree(self):
+        from_dir = self.next_command['from_dir']
+        to_dir = self.next_command['to_dir']
+
+        if from_dir == Direction.WEST:
+            if to_dir == Direction.NORTH:
+                return settings.QUARTER_TURN_DEGREES
+            return -settings.QUARTER_TURN_DEGREES
+        elif from_dir == Direction.EAST:
+            if to_dir == Direction.SOUTH:
+                return settings.QUARTER_TURN_DEGREES
+            return -settings.QUARTER_TURN_DEGREES
+        elif from_dir == Direction.NORTH:
+            if to_dir == Direction.WEST:
+                return settings.QUARTER_TURN_DEGREES
+            return -settings.QUARTER_TURN_DEGREES
+        else:
+            if to_dir == Direction.EAST:
+                return settings.QUARTER_TURN_DEGREES
+            return -settings.QUARTER_TURN_DEGREES
 
     def send_beacon(self):
         """
@@ -85,8 +119,6 @@ class Car:
         receive = Receive(self.car['ip'])
         while True:
             msg = receive.listen()
-            logging.info("Message received")
-
             # Throw away updates from yourself
             if not self.car['ip'] == msg['ip']:
                 self.location_table[msg['ip']] = msg
