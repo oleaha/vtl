@@ -37,7 +37,7 @@ class Planner(threading.Thread):
         while not self.exitFlag:
             if self.plan.qsize() < 6:
                 self.calculate_next_step()
-                logging.info(str(self.position[0]) + "," + str(self.position[1]))
+                logging.info("Returned pos: " + str(self.position[0]) + "," + str(self.position[1]))
 
     def calculate_next_step(self):
         logging.debug("Calculating next step")
@@ -87,12 +87,19 @@ class Planner(threading.Thread):
         self.position = new_pos
         self.to_dir = direction
 
+    def half_turn(self):
+        self.plan.put({
+            'command': 'half_turn', 'next_pos': self.position, 'to_dir': self.to_dir,
+            'from_dir': Direction().inverse_dir(self.to_dir)
+        })
+
     def drive_straight(self, direction):
         new_pos = self.LOC.update_car_pos(direction)
 
         if new_pos == self.position:
             logging.debug("new pos is out-of-bounds, rejecting pos")
             self.handle_out_of_bounds()
+            self.half_turn()
             return
 
         logging.debug("new pos is now " + str(new_pos))
@@ -107,6 +114,7 @@ class Planner(threading.Thread):
 
     def handle_out_of_bounds(self):
         # TODO: Assuming end of map
+        # TODO: Refactor into half_turn
         # Set the inverse direction as new direction
         new_pos = self.LOC.update_car_pos_turn(to_dir=self.to_dir, new_to_dir=Direction().inverse_dir(self.to_dir))
         self.to_dir = Direction().inverse_dir(self.to_dir)

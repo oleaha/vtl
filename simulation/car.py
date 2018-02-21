@@ -34,7 +34,7 @@ class Car:
         self.car['from_dir'] = from_dir
 
         # Thread logger
-        logging.basicConfig(level=logging.DEBUG,
+        logging.basicConfig(level=logging.INFO,
                             format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s',
                             )
         logging.debug("car.py started")
@@ -62,7 +62,7 @@ class Car:
             if self.plan.qsize() > 5:
                 # TODO: self.plan.get does not include
                 self.next_command = self.plan.get()
-                logging.debug("Command: " + str(self.next_command))
+                logging.info("Command: " + str(self.next_command))
                 time.sleep(1)  # TODO: The time will depend on current command.
 
                 # TODO: Implement MotorControl and update self.car
@@ -78,6 +78,10 @@ class Car:
             time.sleep(settings.BROADCAST_STEP)
 
     def receive(self):
+        """
+        Listens for broadcast messages on the network. Update location table if sender is not the same as receiver
+        :return:
+        """
         receive = Receive(self.car['ip'])
         while True:
             msg = receive.listen()
