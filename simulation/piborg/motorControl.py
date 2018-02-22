@@ -72,6 +72,9 @@ class MotorControlV2:
         num_seconds = meters * self.timeForwardOneMeter
         self.perform_move(drive_left, drive_right, num_seconds)
 
+    def stop_motors(self):
+        self.TB.MotorsOff()
+
     def set_led_green(self):
         self.TB.SetLeds(0, 1, 0)
 

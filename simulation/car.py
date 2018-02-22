@@ -34,9 +34,10 @@ class Car:
         self.car['to_dir'] = to_dir
         self.car['from_dir'] = from_dir
         self.next_command = None
+        self.RUNNING = True
 
         # Thread logger
-        logging.basicConfig(level=logging.INFO,
+        logging.basicConfig(level=logging.DEBUG,
                             format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s',
                             )
         logging.debug("car.py started")
@@ -60,10 +61,17 @@ class Car:
         self.receive_thread = threading.Thread(target=self.receive, name="Receive")
         self.receive_thread.start()
 
-        while True:
-            if self.plan.qsize() > 5:
-                self.execute_command()
-                logging.info("---------")
+        try:
+            while True:
+                if self.plan.qsize() > 5:
+                    self.execute_command()
+                    logging.info("---------")
+        except KeyboardInterrupt:
+            self.PLANNER.stop_thread()
+            self.MC.stop_motors()
+            self.RUNNING = False
+            logging.debug("All systems stopped")
+            sys.exit()
 
     def execute_command(self):
         self.next_command = self.plan.get()
@@ -106,10 +114,11 @@ class Car:
         Sends a beacon broadcast message every with car info every x seconds.
         """
         send = Send(broadcast=True)
-        while True:
+        while self.RUNNING:
             logging.debug("Sending beacon")
             send.send(self.car)
             time.sleep(settings.BROADCAST_STEP)
+        send.close()
 
     def receive(self):
         """
@@ -117,12 +126,13 @@ class Car:
         :return:
         """
         receive = Receive(self.car['ip'])
-        while True:
+        while self.RUNNING:
             msg = receive.listen()
             # Throw away updates from yourself
             if not self.car['ip'] == msg['ip']:
                 self.location_table[msg['ip']] = msg
                 logging.info("Updated location table " + str(self.location_table))
+        receive.close()
 
 
 if len(sys.argv) > 1:

@@ -16,3 +16,6 @@ class MotorControl(object):
 
     def perform_drive(self, meters):
         return self.perform_move()
+
+    def stop_motors(self):
+        return
