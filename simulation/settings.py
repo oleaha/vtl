@@ -4,6 +4,9 @@
 Map layout constants. Size of map in X and Y direction.
 Definition of roads and intersections
 """
+
+"""
+# Large map
 MAP_SIZE_X = 61
 MAP_SIZE_Y = 40
 ROADS_X = [19, 20]
@@ -12,6 +15,20 @@ INTERSECTIONS = [
     ((19, 19), (19, 20), (20, 19), (20, 20)),
     ((19, 40), (19, 41), (20, 40), (20, 41))
 ]
+"""
+
+# Small map
+MAP_SIZE_X = 9
+MAP_SIZE_Y = 9
+
+ROADS_X = [3, 4]
+ROADS_Y = [3, 4]
+
+INTERSECTIONS = [
+    ((4, 3), (3, 3), (3, 4), (4, 4))
+]
+
+
 
 PROBABILITIES = {'left': 0.2, 'right': 0.4}
 

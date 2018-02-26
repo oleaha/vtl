@@ -53,7 +53,6 @@ class Car:
         self.PLANNER = Planner(1, "Planner", self.car['curr_pos'], self.car['to_dir'], self.plan)
         self.PLANNER.start()
 
-        # Initialize network module and send beacon method
         self.beacon_thread = threading.Thread(target=self.send_beacon, name="Send Beacon")  # TODO: No sure if this is the best solution
         self.beacon_thread.start()
 
@@ -61,10 +60,13 @@ class Car:
         self.receive_thread = threading.Thread(target=self.receive, name="Receive")
         self.receive_thread.start()
 
+        self.LOC.map.print_map(self.car['curr_pos'])
+
         try:
             while True:
                 if self.plan.qsize() > 5:
                     self.execute_command()
+                    self.LOC.map.print_map(self.car['curr_pos'])
                     logging.info("---------")
         except KeyboardInterrupt:
             self.PLANNER.stop_thread()
@@ -86,6 +88,13 @@ class Car:
         elif self.next_command['command'] == "half_turn":
             logging.error("Executing half turn command")
             self.MC.perform_spin(settings.HALF_TURN_DEGREES)
+        self.update_self_state()
+
+    def update_self_state(self):
+        self.car['prev_pos'] = self.car['curr_pos']
+        self.car['curr_pos'] = self.next_command['next_pos']
+        self.car['to_dir'] = self.next_command['to_dir']
+        self.car['from_dir'] = self.next_command['from_dir']
 
     # TODO: Refactor to UTILS
     def calculate_quarter_spin_degree(self):
@@ -136,6 +145,6 @@ class Car:
 
 
 if len(sys.argv) > 1:
-    c = Car(str(sys.argv[1]), (19, 19), 'e', 'w')
+    c = Car(str(sys.argv[1]), (3, 8), 'e', 'w')
 else:
-    c = Car('192.168.1.1', (19, 19), 'e', 'w')
+    c = Car('192.168.1.1', (3, 8), 'e', 'w')

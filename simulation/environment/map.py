@@ -1,7 +1,7 @@
 from simulation import settings
 import numpy
 from intersection import Intersection
-
+import copy
 
 class Map:
 
@@ -45,9 +45,9 @@ class Map:
 
     def print_map(self, car_pos):
         # Make a copy of the map
-        map = self.map[:]
-        map[car_pos] = 8
-        for row in map:
+        tmp_map = copy.copy(self.map)
+        tmp_map[car_pos] = 8
+        for row in tmp_map:
             string = ''
             for pos in row:
                 if pos == 0:
@@ -61,4 +61,6 @@ class Map:
             with open('test.txt', 'a') as myfile:
                 myfile.write(string+"\n")
                 myfile.close()
-
+        with open('test.txt', 'a') as myfile:
+            myfile.write("\n")
+            myfile.close()
