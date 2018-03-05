@@ -18,8 +18,8 @@ INTERSECTIONS = [
 """
 
 # Small map
-MAP_SIZE_X = 9
-MAP_SIZE_Y = 9
+MAP_SIZE_X = 8
+MAP_SIZE_Y = 8
 
 ROADS_X = [3, 4]
 ROADS_Y = [3, 4]

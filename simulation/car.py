@@ -4,8 +4,8 @@ sys.path.append(os.getcwd())
 
 
 from simulation.location.location import Location
-#from simulation.piborg.motorControl import MotorControl
-from simulation.piborg.motorControlMock import MotorControl
+from simulation.piborg.motorControl import MotorControlV2
+#from simulation.piborg.motorControlMock import MotorControl
 from simulation.planner.planner import Planner
 from simulation.network.send import Send
 from simulation.network.receive import Receive
@@ -37,7 +37,7 @@ class Car:
         self.RUNNING = True
 
         # Thread logger
-        logging.basicConfig(level=logging.DEBUG,
+        logging.basicConfig(level=logging.ERROR,
                             format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s',
                             )
         logging.debug("car.py started")
@@ -45,7 +45,7 @@ class Car:
         # Initialize location module
         self.LOC = Location(self.car['curr_pos'])
         # Initialize motor control module
-        self.MC = MotorControl()
+        self.MC = MotorControlV2()
 
         # Create a queue for commands planned by the planner
         self.plan = Queue.Queue()
@@ -87,7 +87,9 @@ class Car:
             self.MC.perform_spin(self.calculate_quarter_spin_degree())
         elif self.next_command['command'] == "half_turn":
             logging.error("Executing half turn command")
-            self.MC.perform_spin(settings.HALF_TURN_DEGREES)
+            self.MC.perform_spin(-90)
+	    self.MC.perform_drive(0.20)
+	    self.MC.perform_spin(-90)
         self.update_self_state()
 
     def update_self_state(self):
@@ -145,6 +147,6 @@ class Car:
 
 
 if len(sys.argv) > 1:
-    c = Car(str(sys.argv[1]), (3, 8), 'e', 'w')
+    c = Car(str(sys.argv[1]), (3, 7), 'e', 'w')
 else:
-    c = Car('192.168.1.1', (3, 8), 'e', 'w')
+    c = Car('192.168.1.1', (3, 7), 'e', 'w')

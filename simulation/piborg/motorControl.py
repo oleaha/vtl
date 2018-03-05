@@ -30,7 +30,7 @@ class MotorControlV2:
         self.TB.SetCommsFailsafe(False)
         self.timeForwardOneMeter = 3.15
 
-        self.timeSpinThreeSixty = 2.35
+        self.timeSpinThreeSixty = 2.37
         self.voltageIn = 12.0
         self.voltageOut = 0.95 * 12
 
@@ -40,11 +40,15 @@ class MotorControlV2:
             self.maxPower = self.voltageOut / float(self.voltageIn)
 
     def perform_move(self, drive_left, drive_right, num_seconds):
-        self.TB.SetMotor1(-drive_left * self.maxPower)
+        print self.maxPower
+	print drive_left
+	print drive_right
+	self.TB.SetMotor1(-drive_left * self.maxPower)
         self.TB.SetMotor2(drive_right * self.maxPower)
-
         time.sleep(num_seconds)
-        self.TB.MotorsOff()
+        self.TB.SetMotor1(0)
+	self.TB.SetMotor2(0)
+	time.sleep(0.3)
 
     def perform_spin(self, angle):
         if angle < 0.0:

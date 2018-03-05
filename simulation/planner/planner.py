@@ -80,7 +80,7 @@ class Planner(threading.Thread):
         logging.debug("new pos accepted: " + str(new_pos))
 
         self.plan.put(
-            {'command': 'quarter turn', 'next_pos': new_pos, 'to_dir': direction,
+            {'command': 'quarter_turn', 'next_pos': new_pos, 'to_dir': direction,
              'from_dir': self.to_dir})
 
         self.prev_pos = self.position
