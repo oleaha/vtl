@@ -1,7 +1,7 @@
 import time
 
 
-class MotorControl(object):
+class MotorControlV2(object):
 
     def __init__(self):
         return

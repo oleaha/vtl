@@ -2,10 +2,9 @@ import sys
 import os
 sys.path.append(os.getcwd())
 
-
 from simulation.location.location import Location
-from simulation.piborg.motorControl import MotorControlV2
-#from simulation.piborg.motorControlMock import MotorControl
+#from simulation.piborg.motorControl import MotorControlV2
+from simulation.piborg.motorControlMock import MotorControlV2
 from simulation.planner.planner import Planner
 from simulation.network.send import Send
 from simulation.network.receive import Receive
@@ -37,7 +36,7 @@ class Car:
         self.RUNNING = True
 
         # Thread logger
-        logging.basicConfig(level=logging.ERROR,
+        logging.basicConfig(level=logging.DEBUG,
                             format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s',
                             )
         logging.debug("car.py started")
@@ -88,8 +87,8 @@ class Car:
         elif self.next_command['command'] == "half_turn":
             logging.error("Executing half turn command")
             self.MC.perform_spin(-90)
-	    self.MC.perform_drive(0.20)
-	    self.MC.perform_spin(-90)
+            self.MC.perform_drive(0.20)
+            self.MC.perform_spin(-90)
         self.update_self_state()
 
     def update_self_state(self):
@@ -140,6 +139,7 @@ class Car:
         while self.RUNNING:
             msg = receive.listen()
             # Throw away updates from yourself
+            # TODO: Check message type: beacon or app specific
             if not self.car['ip'] == msg['ip']:
                 self.location_table[msg['ip']] = msg
                 logging.info("Updated location table " + str(self.location_table))
