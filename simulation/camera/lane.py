@@ -11,7 +11,7 @@ import picamera.array
 
 class LaneDetection:
 
-    def __init__(self, debug=False, resolution=(572, 480), framerate=5, vflip=False, hflip=False):
+    def __init__(self, debug=False, resolution=(752, 480), framerate=5, vflip=False, hflip=False):
         self.camera = picamera.PiCamera()
         self.camera.resolution = resolution
         self.camera.framerate = framerate
