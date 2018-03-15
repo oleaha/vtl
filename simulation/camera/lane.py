@@ -122,24 +122,25 @@ def average_slope(lines):
     left_weights = []
     right_lines = []
     right_weights = []
+    if len(lines) > 0:
+        for line in lines:
+            for x1, y1, x2, y2 in line:
+                if x1 == x2:
+                    continue
+                slope = (y2 - y1) / (x2 - x1)
+                intercept = y1 - (slope * x1)
+                length = np.sqrt(((y2 - y1) ** 2) + ((x2 - x1) ** 2))
 
-    for line in lines:
-        for x1, y1, x2, y2 in line:
-            if x1 == x2:
-                continue
-            slope = (y2 - y1) / (x2 - x1)
-            intercept = y1 - (slope * x1)
-            length = np.sqrt(((y2 - y1) ** 2) + ((x2 - x1) ** 2))
-
-            if slope < 0:
-                left_lines.append((slope, intercept))
-                left_weights.append((length))
-            else:
-                right_lines.append((slope, intercept))
-                right_weights.append((length))
-    left_lane = np.dot(left_weights, left_lines) / np.sum(left_weights) if len(left_weights) > 0 else None
-    right_lane = np.dot(right_weights, right_lines) / np.sum(right_weights) if len(right_weights) > 0 else None
-    return left_lane, right_lane
+                if slope < 0:
+                    left_lines.append((slope, intercept))
+                    left_weights.append((length))
+                else:
+                    right_lines.append((slope, intercept))
+                    right_weights.append((length))
+        left_lane = np.dot(left_weights, left_lines) / np.sum(left_weights) if len(left_weights) > 0 else None
+        right_lane = np.dot(right_weights, right_lines) / np.sum(right_weights) if len(right_weights) > 0 else None
+        return left_lane, right_lane
+    return 0, 0
 
 
 def pixel_points(y1, y2, line):
@@ -167,12 +168,14 @@ def lane_lines(image, lines):
     :param lines:
     :return:
     """
-    left_lane, right_lane = average_slope(lines)
-    y1 = image.shape[0]
-    y2 = y1 * 0.6
-    left_line = pixel_points(y1, y2, left_lane)
-    right_line = pixel_points(y1, y2, right_lane)
-    return left_line, right_line
+    if lines.all() and len(lines) > 0:
+        left_lane, right_lane = average_slope(lines)
+        y1 = image.shape[0]
+        y2 = y1 * 0.6
+        left_line = pixel_points(y1, y2, left_lane)
+        right_line = pixel_points(y1, y2, right_lane)
+        return left_line, right_line
+    return None, None
 
 
 def draw_lane_lines(image, lines, color=[255, 0, 0], thickness=12):
@@ -185,12 +188,13 @@ def draw_lane_lines(image, lines, color=[255, 0, 0], thickness=12):
     :return:
     """
     if len(lines) == 2:
-        if lines[0] != None and lines[1] != None:
+        if lines[0] is not None and lines[1] is not None:
             top_center_x = (lines[0][1][0] + lines[1][1][0]) / 2
-        elif lines[0] == None:
+        elif lines[0] is None:
             top_center_x = 0
-        elif lines[1] == None:
+        elif lines[1] is None:
             top_center_x = 752
+
         if debug:
             cv2.putText(image, "Top center x: " + str(top_center_x), (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6,
                         [0, 0, 255], 1)
