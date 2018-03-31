@@ -221,7 +221,7 @@ class LaneDetection:
             undistorted = cv2.undistort(img, calibration_matrix['mtx'], calibration_matrix['dist'], None,
                                         calibration_matrix['mtx'])
 
-            gray = self.gray_scale(undistorted)
+            gray = self.gray_scale(img)
 
             blurred = self.gaussian_smoothing(gray, 3)
 
@@ -232,7 +232,7 @@ class LaneDetection:
             houghlines = self.hough_transform(trimmed)
 
             if self.debug:
-                final = self.draw_lane_lines(undistorted, self.lane_lines(img, houghlines))
+                final = self.draw_lane_lines(img, self.lane_lines(img, houghlines))
                 cv2.line(final, (0, 450), (230, 300), [0, 255, 0], 2)
                 cv2.line(final, (720, 480), (540, 310), [0, 255, 0], 2)
                 cv2.line(final, (230, 300), (540, 310), [0, 255, 0], 2)
@@ -248,4 +248,5 @@ class LaneDetection:
                 self.rawCapture.truncate()
                 self.rawCapture.seek(0)
 
-
+c = LaneDetection(debug=True)
+c.lane_detection()
