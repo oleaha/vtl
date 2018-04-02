@@ -107,6 +107,3 @@ class Location:
         if distance:
             return closest_dist
         return closest_intersection
-
-
-lo = Location((12, 34))

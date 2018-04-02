@@ -43,10 +43,12 @@ class Map:
     def update_map_pos(self, pos, value):
         self.map[pos[1]][pos[2]] = value
 
-    def print_map(self, car_pos):
+    def print_map(self, car_pos, car_ip):
         # Make a copy of the map
         tmp_map = copy.copy(self.map)
         tmp_map[car_pos] = 8
+        filename = "car_" + car_ip + ".txt"
+
         for row in tmp_map:
             string = ''
             for pos in row:
@@ -58,9 +60,9 @@ class Map:
                     string += '\033[92m' + str(pos) + '\033[0m '
                 else:
                     string += '\033[93m' + str(pos) + '\033[0m '
-            with open('test.txt', 'a') as myfile:
+            with open(filename, 'a') as myfile:
                 myfile.write(string+"\n")
                 myfile.close()
-        with open('test.txt', 'a') as myfile:
+        with open(filename, 'a') as myfile:
             myfile.write("\n")
             myfile.close()

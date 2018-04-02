@@ -17,6 +17,7 @@ import time
 import threading
 import json
 
+
 class Car:
 
     LOC = None
@@ -59,13 +60,13 @@ class Car:
         self.receive_thread = threading.Thread(target=self.receive, name="Receive")
         self.receive_thread.start()
 
-        self.LOC.map.print_map(self.car['curr_pos'])
+        self.LOC.map.print_map(self.car['curr_pos'], self.car['ip'])
 
         try:
             while True:
                 if self.plan.qsize() > 5:
                     self.execute_command()
-                    self.LOC.map.print_map(self.car['curr_pos'])
+                    self.LOC.map.print_map(self.car['curr_pos'], self.car['ip'])
                     logging.info("---------")
         except KeyboardInterrupt:
             self.PLANNER.stop_thread()
