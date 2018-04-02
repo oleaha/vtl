@@ -1,0 +1,6 @@
+
+
+class MessageTypes:
+    BEACON = 'BEACON'
+    TRAFFIC_LIGHT = 'TRAFFIC_LIGHT'
+    VTL = 'VIRTUAL_TRAFFIC_LIGHT'

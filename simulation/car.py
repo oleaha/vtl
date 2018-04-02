@@ -10,6 +10,7 @@ from simulation.network.send import Send
 from simulation.network.receive import Receive
 import settings
 from simulation.utils.direction import Direction
+from simulation.utils.message_types import MessageTypes
 
 import logging
 import Queue
@@ -120,6 +121,12 @@ class Car:
                 return settings.QUARTER_TURN_DEGREES
             return -settings.QUARTER_TURN_DEGREES
 
+    def message_handler(self, msg_type, msg):
+        if msg_type == MessageTypes.BEACON:
+            # Update location table with new data
+            self.location_table[msg['ip']] = msg
+            logging.info("Updated location table " + str(self.location_table))
+
     def send_beacon(self):
         """
         Sends a beacon broadcast message every with car info every x seconds.
@@ -127,7 +134,7 @@ class Car:
         send = Send(broadcast=True)
         while self.RUNNING:
             logging.debug("Sending beacon")
-            send.send(self.car)
+            send.send(MessageTypes.BEACON, self.car)
             time.sleep(settings.BROADCAST_STEP)
         send.close()
 
@@ -139,11 +146,11 @@ class Car:
         receive = Receive(self.car['ip'])
         while self.RUNNING:
             msg = receive.listen()
-            # Throw away updates from yourself
-            # TODO: Check message type: beacon or app specific
-            if not self.car['ip'] == msg['ip']:
-                self.location_table[msg['ip']] = msg
-                logging.info("Updated location table " + str(self.location_table))
+
+            # Skip messages where sender is the same as receiver
+            if msg['ip'] != self.car['ip']:
+                self.message_handler(msg['message_type'], msg)
+
         receive.close()
 
 

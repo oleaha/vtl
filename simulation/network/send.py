@@ -19,8 +19,9 @@ class Send:
         except socket.error:
             logging.error("Could not create socket, error: " + str(socket.error.message))
 
-    def send(self, msg):
+    def send(self, msg_type, msg):
         try:
+            msg['message_type'] = msg_type
             self.socket.sendto(json.dumps(msg), (self.ip, self.port))
         except socket.error:
             logging.error("Could not send message")
