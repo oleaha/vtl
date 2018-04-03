@@ -14,32 +14,25 @@ import logging
 
 class LaneDetection(threading.Thread):
 
-    def __init__(self):
+    def __init__(self, measurements):
         threading.Thread.__init__(self)
         self.exitFlag = False
-
-        #self.camera = picamera.PiCamera()
-        #self.camera.resolution = settings.CAMERA_RESOLUTION
-        #self.camera.framerate = settings.CAMERA_FRAME_RATE
-        #self.camera.vflip = settings.CAMERA_VFLIP
-        #self.camera.hflip = settings.CAMERA_HFLIP
-        #self.rawCapture = picamera.array.PiRGBArray(self.camera)
         self.debug = settings.LANE_DEBUG
-        # Warm up camera
-        #time.sleep(settings.CAMERA_WARMUP_TIME)
+        self.camera = None
+        self.rawCapture = None
         self.current_center_list = []
+        self.measurements = measurements
 
     def init_camera(self):
-	self.camera = picamera.PiCamera()
-	self.camera.resolution = settings.CAMERA_RESOLUTION
-	self.camera.framerate = settings.CAMERA_FRAME_RATE
-	self.rawCapture = picamera.array.PiRGBArray(self.camera)
-	time.sleep(0.1)
-
+        self.camera = picamera.PiCamera()
+        self.camera.resolution = settings.CAMERA_RESOLUTION
+        self.camera.framerate = settings.CAMERA_FRAME_RATE
+        self.rawCapture = picamera.array.PiRGBArray(self.camera)
+        time.sleep(0.1)
 
     def run(self):
         logging.debug("thread started")
-	self.lane_detection()
+        self.lane_detection()
         logging.debug("thread stopped")
 
     @staticmethod
@@ -231,8 +224,10 @@ class LaneDetection(threading.Thread):
         return top_center_x
 
     def lane_detection(self):
+
         self.init_camera()
-	while not self.exitFlag:
+
+        while not self.exitFlag:
             for frame in self.camera.capture_continuous(self.rawCapture, format="bgr", use_video_port=True):
                 with open("calibration_matrix.txt", 'r') as f:
                     calibration_matrix = pickle.load(f)
@@ -243,13 +238,9 @@ class LaneDetection(threading.Thread):
                                             calibration_matrix['mtx'])
 
                 gray = self.gray_scale(img)
-
                 blurred = self.gaussian_smoothing(gray, 3)
-
                 edged = self.canny_detector(blurred, 50, 150)
-
                 trimmed = self.region_selection(edged)
-
                 houghlines = self.hough_transform(trimmed)
 
                 if self.debug:
@@ -271,12 +262,11 @@ class LaneDetection(threading.Thread):
                     self.rawCapture.seek(0)
 
                     if len(self.current_center_list) == 10:
-                        tmp = self.current_center_list[:]
+                        self.measurements.put(self.current_center_list)
                         del self.current_center_list[:]
-                        print tmp
-		    else:
-                    	self.current_center_list.append(current_center)
-                    	# return current_center, offset
+                    else:
+                        self.current_center_list.append(current_center)
+                    # return current_center, offset
 
     def stop_thread(self):
         self.exitFlag = True

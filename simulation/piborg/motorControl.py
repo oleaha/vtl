@@ -4,6 +4,9 @@ import sys
 from simulation.piborg import ThunderBorg
 from simulation.camera.lane import LaneDetection
 import logging
+import Queue
+import numpy
+
 
 class MotorControlV2:
     """
@@ -14,9 +17,9 @@ class MotorControlV2:
         # Set up thunderborg
         self.TB = ThunderBorg.ThunderBorg()
         self.TB.Init()
-        self.LD = LaneDetection()
-        self.current_center, self.offset = LaneDetection.start()
 
+        self.measurements = Queue.LifoQueue()
+        self.LD = LaneDetection(self.measurements)
 
         if not self.TB.foundChip:
             boards = ThunderBorg.ScanForThunderBorg()
@@ -44,8 +47,6 @@ class MotorControlV2:
             self.maxPower = self.voltageOut / float(self.voltageIn)
 
     def perform_move(self, drive_left, drive_right, num_seconds):
-        # TODO: Implement adjustment before movement
-        logging.debug("Current offset" + str(self.offset))
         self.TB.SetMotor1(-drive_left * self.maxPower)
         self.TB.SetMotor2(drive_right * self.maxPower)
         time.sleep(num_seconds)
@@ -76,6 +77,11 @@ class MotorControlV2:
         else:
             drive_left = 1.0
             drive_right = 1.0
+
+        # TODO: Implement adjustment, only when driving straight and before straight command.
+        if self.measurements.qsize() > 0:
+            logging.info("Average offset:" + str(numpy.average(self.measurements.get())))
+            self.measurements.task_done()
 
         num_seconds = meters * self.timeForwardOneMeter
         self.perform_move(drive_left, drive_right, num_seconds)
