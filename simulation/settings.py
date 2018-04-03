@@ -53,7 +53,7 @@ BROADCAST_STEP = 3  # Send beacons every 1 second
 
 
 # Lane detection settings
-CAMERA_FRAME_RATE = 5
+CAMERA_FRAME_RATE = 10
 CAMERA_RESOLUTION = (752, 480)
 CAMERA_VFLIP = False
 CAMERA_HFLIP = False

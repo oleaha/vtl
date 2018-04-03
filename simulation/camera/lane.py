@@ -7,7 +7,7 @@ import cv2
 import picamera
 import numpy as np
 import picamera.array
-import settings
+from simulation import settings
 import threading
 import logging
 
@@ -18,20 +18,28 @@ class LaneDetection(threading.Thread):
         threading.Thread.__init__(self)
         self.exitFlag = False
 
-        self.camera = picamera.PiCamera()
-        self.camera.resolution = settings.CAMERA_RESOLUTION
-        self.camera.framerate = settings.CAMERA_FRAME_RATE
-        self.camera.vflip = settings.CAMERA_VFLIP
-        self.camera.hflip = settings.CAMERA_HFLIP
-        self.rawCapture = picamera.array.PiRGBArray(self.camera)
+        #self.camera = picamera.PiCamera()
+        #self.camera.resolution = settings.CAMERA_RESOLUTION
+        #self.camera.framerate = settings.CAMERA_FRAME_RATE
+        #self.camera.vflip = settings.CAMERA_VFLIP
+        #self.camera.hflip = settings.CAMERA_HFLIP
+        #self.rawCapture = picamera.array.PiRGBArray(self.camera)
         self.debug = settings.LANE_DEBUG
         # Warm up camera
-        time.sleep(settings.CAMERA_WARMUP_TIME)
+        #time.sleep(settings.CAMERA_WARMUP_TIME)
         self.current_center_list = []
+
+    def init_camera(self):
+	self.camera = picamera.PiCamera()
+	self.camera.resolution = settings.CAMERA_RESOLUTION
+	self.camera.framerate = settings.CAMERA_FRAME_RATE
+	self.rawCapture = picamera.array.PiRGBArray(self.camera)
+	time.sleep(0.1)
+
 
     def run(self):
         logging.debug("thread started")
-        self.lane_detection()
+	self.lane_detection()
         logging.debug("thread stopped")
 
     @staticmethod
@@ -223,7 +231,8 @@ class LaneDetection(threading.Thread):
         return top_center_x
 
     def lane_detection(self):
-        while not self.exitFlag:
+        self.init_camera()
+	while not self.exitFlag:
             for frame in self.camera.capture_continuous(self.rawCapture, format="bgr", use_video_port=True):
                 with open("calibration_matrix.txt", 'r') as f:
                     calibration_matrix = pickle.load(f)
@@ -264,15 +273,15 @@ class LaneDetection(threading.Thread):
                     if len(self.current_center_list) == 10:
                         tmp = self.current_center_list[:]
                         del self.current_center_list[:]
-                        return tmp
-
-                    self.current_center_list.append(current_center)
-                    # return current_center, offset
+                        print tmp
+		    else:
+                    	self.current_center_list.append(current_center)
+                    	# return current_center, offset
 
     def stop_thread(self):
         self.exitFlag = True
 
 
-if settings.LANE_DEBUG:
-    c = LaneDetection()
-    c.start()
+
+c = LaneDetection()
+c.start()
