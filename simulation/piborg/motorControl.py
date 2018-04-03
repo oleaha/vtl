@@ -2,7 +2,8 @@ import PicoBorgRev
 import time
 import sys
 from simulation.piborg import ThunderBorg
-
+from simulation.camera.lane import LaneDetection
+import logging
 
 class MotorControlV2:
     """
@@ -13,6 +14,9 @@ class MotorControlV2:
         # Set up thunderborg
         self.TB = ThunderBorg.ThunderBorg()
         self.TB.Init()
+        self.LD = LaneDetection()
+        self.current_center, self.offset = LaneDetection.start()
+
 
         if not self.TB.foundChip:
             boards = ThunderBorg.ScanForThunderBorg()
@@ -40,15 +44,14 @@ class MotorControlV2:
             self.maxPower = self.voltageOut / float(self.voltageIn)
 
     def perform_move(self, drive_left, drive_right, num_seconds):
-        print self.maxPower
-	print drive_left
-	print drive_right
-	self.TB.SetMotor1(-drive_left * self.maxPower)
+        # TODO: Implement adjustment before movement
+        logging.debug("Current offset" + str(self.offset))
+        self.TB.SetMotor1(-drive_left * self.maxPower)
         self.TB.SetMotor2(drive_right * self.maxPower)
         time.sleep(num_seconds)
         self.TB.SetMotor1(0)
-	self.TB.SetMotor2(0)
-	time.sleep(0.3)
+        self.TB.SetMotor2(0)
+        time.sleep(0.3)
 
     def perform_spin(self, angle):
         if angle < 0.0:

@@ -50,3 +50,14 @@ https://www.sans.org/security-resources/sec560/netcat_cheat_sheet_v1.pdf
 BROADCAST_IP = "127.255.255.255"
 BROADCAST_PORT = 5005
 BROADCAST_STEP = 3  # Send beacons every 1 second
+
+
+# Lane detection settings
+CAMERA_FRAME_RATE = 5
+CAMERA_RESOLUTION = (752, 480)
+CAMERA_VFLIP = False
+CAMERA_HFLIP = False
+CAMERA_WARMUP_TIME = 0.1
+
+ACTUAL_CENTER = 376  # in pixels
+LANE_DEBUG = False

@@ -7,20 +7,32 @@ import cv2
 import picamera
 import numpy as np
 import picamera.array
+import settings
+import threading
+import logging
 
 
-class LaneDetection:
+class LaneDetection(threading.Thread):
 
-    def __init__(self, debug=False, resolution=(752, 480), framerate=5, vflip=False, hflip=False):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.exitFlag = False
+
         self.camera = picamera.PiCamera()
-        self.camera.resolution = resolution
-        self.camera.framerate = framerate
-        self.camera.vflip = vflip
-        self.camera.hflip = hflip
+        self.camera.resolution = settings.CAMERA_RESOLUTION
+        self.camera.framerate = settings.CAMERA_FRAME_RATE
+        self.camera.vflip = settings.CAMERA_VFLIP
+        self.camera.hflip = settings.CAMERA_HFLIP
         self.rawCapture = picamera.array.PiRGBArray(self.camera)
-        self.debug = debug
+        self.debug = settings.LANE_DEBUG
         # Warm up camera
-        time.sleep(0.1)
+        time.sleep(settings.CAMERA_WARMUP_TIME)
+        self.current_center_list = []
+
+    def run(self):
+        logging.debug("thread started")
+        self.lane_detection()
+        logging.debug("thread stopped")
 
     @staticmethod
     def gray_scale(image):
@@ -211,42 +223,56 @@ class LaneDetection:
         return top_center_x
 
     def lane_detection(self):
+        while not self.exitFlag:
+            for frame in self.camera.capture_continuous(self.rawCapture, format="bgr", use_video_port=True):
+                with open("calibration_matrix.txt", 'r') as f:
+                    calibration_matrix = pickle.load(f)
 
-        for frame in self.camera.capture_continuous(self.rawCapture, format="bgr", use_video_port=True):
-            with open("calibration_matrix.txt", 'r') as f:
-                calibration_matrix = pickle.load(f)
+                img = frame.array
 
-            img = frame.array
+                undistorted = cv2.undistort(img, calibration_matrix['mtx'], calibration_matrix['dist'], None,
+                                            calibration_matrix['mtx'])
 
-            undistorted = cv2.undistort(img, calibration_matrix['mtx'], calibration_matrix['dist'], None,
-                                        calibration_matrix['mtx'])
+                gray = self.gray_scale(img)
 
-            gray = self.gray_scale(img)
+                blurred = self.gaussian_smoothing(gray, 3)
 
-            blurred = self.gaussian_smoothing(gray, 3)
+                edged = self.canny_detector(blurred, 50, 150)
 
-            edged = self.canny_detector(blurred, 50, 150)
+                trimmed = self.region_selection(edged)
 
-            trimmed = self.region_selection(edged)
+                houghlines = self.hough_transform(trimmed)
 
-            houghlines = self.hough_transform(trimmed)
+                if self.debug:
+                    final = self.draw_lane_lines(img, self.lane_lines(img, houghlines))
+                    cv2.line(final, (0, 450), (230, 300), [0, 255, 0], 2)
+                    cv2.line(final, (720, 480), (540, 310), [0, 255, 0], 2)
+                    cv2.line(final, (230, 300), (540, 310), [0, 255, 0], 2)
+                    cv2.imshow("Lane Detection", final)
 
-            if self.debug:
-                final = self.draw_lane_lines(img, self.lane_lines(img, houghlines))
-                cv2.line(final, (0, 450), (230, 300), [0, 255, 0], 2)
-                cv2.line(final, (720, 480), (540, 310), [0, 255, 0], 2)
-                cv2.line(final, (230, 300), (540, 310), [0, 255, 0], 2)
-                cv2.imshow("Lane Detection", final)
+                    key = cv2.waitKey(1) & 0xFF
+                    self.rawCapture.truncate()
+                    self.rawCapture.seek(0)
+                    if key == ord("q"):
+                        break
+                else:
+                    current_center = self.draw_lane_lines(undistorted, self.lane_lines(img, houghlines))
+                    offset = settings.ACTUAL_CENTER - current_center
+                    self.rawCapture.truncate()
+                    self.rawCapture.seek(0)
 
-                key = cv2.waitKey(1) & 0xFF
-                self.rawCapture.truncate()
-                self.rawCapture.seek(0)
-                if key == ord("q"):
-                    break
-            else:
-                print self.draw_lane_lines(undistorted, self.lane_lines(img, houghlines))
-                self.rawCapture.truncate()
-                self.rawCapture.seek(0)
+                    if len(self.current_center_list) == 10:
+                        tmp = self.current_center_list[:]
+                        del self.current_center_list[:]
+                        return tmp
 
-c = LaneDetection(debug=True)
-c.lane_detection()
+                    self.current_center_list.append(current_center)
+                    # return current_center, offset
+
+    def stop_thread(self):
+        self.exitFlag = True
+
+
+if settings.LANE_DEBUG:
+    c = LaneDetection()
+    c.start()

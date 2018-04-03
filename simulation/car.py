@@ -86,6 +86,7 @@ class Car:
         elif self.next_command['command'] == "quarter_turn":
             logging.error("Executing quarter turn command")
             self.MC.perform_spin(self.calculate_quarter_spin_degree())
+            # TODO: When turning left, go one step up, then 90 degree turn
         elif self.next_command['command'] == "half_turn":
             logging.error("Executing half turn command")
             self.MC.perform_spin(-90)
