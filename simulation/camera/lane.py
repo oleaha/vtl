@@ -270,8 +270,3 @@ class LaneDetection(threading.Thread):
 
     def stop_thread(self):
         self.exitFlag = True
-
-
-
-c = LaneDetection()
-c.start()

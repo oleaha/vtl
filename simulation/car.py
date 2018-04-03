@@ -72,6 +72,7 @@ class Car:
         except KeyboardInterrupt:
             self.PLANNER.stop_thread()
             self.MC.stop_motors()
+            self.MC.stop_lane_detection()
             self.RUNNING = False
             logging.debug("All systems stopped")
             sys.exit()

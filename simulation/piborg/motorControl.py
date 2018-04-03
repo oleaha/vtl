@@ -101,6 +101,9 @@ class MotorControlV2:
     def set_led_yellow(self):
         self.TB.SetLeds(1, 0.5, 0)
 
+    def stop_lane_detection(self):
+        self.LD.stop_thread()
+
 
 class MotorControlV1(object):
     """
