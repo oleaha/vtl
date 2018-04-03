@@ -19,7 +19,9 @@ class MotorControlV2:
         self.TB.Init()
 
         self.measurements = Queue.LifoQueue()
+        logging.debug("Starting LaneDetection Thread")
         self.LD = LaneDetection(self.measurements)
+        self.LD.start()
 
         if not self.TB.foundChip:
             boards = ThunderBorg.ScanForThunderBorg()
@@ -79,6 +81,7 @@ class MotorControlV2:
             drive_right = 1.0
 
         # TODO: Implement adjustment, only when driving straight and before straight command.
+        logging.debug("Lane detection queue size:" + str(self.measurements.qsize()))
         if self.measurements.qsize() > 0:
             logging.info("Average offset:" + str(numpy.average(self.measurements.get())))
             self.measurements.task_done()
