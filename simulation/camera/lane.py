@@ -257,17 +257,20 @@ class LaneDetection(threading.Thread):
                         break
                 else:
                     current_center = self.draw_lane_lines(undistorted, self.lane_lines(img, houghlines))
+                    logging.info("CURRENT CENTER" + str(current_center))
                     offset = settings.ACTUAL_CENTER - current_center
                     self.rawCapture.truncate()
                     self.rawCapture.seek(0)
 
                     if len(self.current_center_list) == 5:
+                        logging.info("Adding new measurements to queue - " + str(self.current_center_list))
                         self.measurements.put(self.current_center_list)
                         del self.current_center_list[:]
                     else:
+                        logging.info("Adding new measurement to list - " + str(current_center))
                         self.current_center_list.append(current_center)
                     # return current_center, offset
 
     def stop_thread(self):
-	self.exitFlag = True
-	self.camera.close()
+        self.exitFlag = True
+        self.camera.close()
