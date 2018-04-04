@@ -38,7 +38,7 @@ class Car:
         self.RUNNING = True
 
         # Thread logger
-        logging.basicConfig(level=logging.DEBUG,
+        logging.basicConfig(level=logging.INFO,
                             format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s',
                             )
         logging.debug("car.py started")

@@ -261,7 +261,7 @@ class LaneDetection(threading.Thread):
                     self.rawCapture.truncate()
                     self.rawCapture.seek(0)
 
-                    if len(self.current_center_list) == 10:
+                    if len(self.current_center_list) == 5:
                         self.measurements.put(self.current_center_list)
                         del self.current_center_list[:]
                     else:
@@ -269,4 +269,5 @@ class LaneDetection(threading.Thread):
                     # return current_center, offset
 
     def stop_thread(self):
-        self.exitFlag = True
+	self.exitFlag = True
+	self.camera.close()
