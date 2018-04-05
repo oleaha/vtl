@@ -15,7 +15,7 @@ import logging
 class LaneDetection(threading.Thread):
 
     def __init__(self, measurements):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="LaneDetection")
         self.exitFlag = False
         self.debug = settings.LANE_DEBUG
         self.camera = None
@@ -261,12 +261,11 @@ class LaneDetection(threading.Thread):
                     self.rawCapture.truncate()
                     self.rawCapture.seek(0)
 
+                    logging.info("Adding new measurement to list - " + str(current_center))
+                    self.current_center_list.append(current_center)
 
-		    logging.info("Adding new measurement to list - " + str(current_center))
-		    self.current_center_list.append(current_center)
-
-                    if len(self.current_center_list) % 5 == 0:
-			logging.info("Adding new measurements to queue - " + str(self.current_center_list[-5:]))
+                    if len(self.current_center_list) % 3 == 0:
+                        logging.info("Adding new measurements to queue - " + str(self.current_center_list[-5:]))
                         self.measurements.put(self.current_center_list[-5:])
                     # return current_center, offset
 
