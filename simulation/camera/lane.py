@@ -188,8 +188,7 @@ class LaneDetection(threading.Thread):
         """
         if len(lines) > 0:
             left_lane, right_lane = self.average_slope(lines)
-            logging.info("LEFT LANE: " + str(left_lane)
-            #logging.info("RIGHT LANE: " + str(right_lane)           y1 = image.shape[0]
+            y1 = image.shape[0]
             y2 = y1 * 0.6
             left_line = self.pixel_points(y1, y2, left_lane)
             right_line = self.pixel_points(y1, y2, right_lane)
