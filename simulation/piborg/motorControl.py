@@ -67,10 +67,12 @@ class MotorControlV2:
             drive_left = 1.0
             drive_right = -1.0
 
+	self.LD.perform_ld(value=False)
         num_seconds = (angle / 360.0) * self.timeSpinThreeSixty
         self.perform_move(drive_left, drive_right, num_seconds)
 
-    def perform_drive(self, meters):
+    def perform_drive(self, meters, use_lane_detection=True):
+	self.LD.perform_ld(value=True)
         if meters < 0.0:
             drive_left = -1.0
             drive_right = -1.0
@@ -81,7 +83,7 @@ class MotorControlV2:
 
         # TODO: Implement adjustment, only when driving straight and before straight command.
         logging.info("Lane detection queue size:" + str(self.measurements.qsize()))
-        if self.measurements.qsize() > 0:
+        if use_lane_detection and self.measurements.qsize() > 0:
             measure = self.measurements.get()
 
             if len(measure) > 0:
@@ -89,9 +91,9 @@ class MotorControlV2:
                 if len(measure) > 0:
                     average = numpy.average(measure)
                     if average < settings.ACTUAL_CENTER:
-                        drive_left = drive_left * 0.9
+                        drive_left = drive_left * 0.95
                     elif average > settings.ACTUAL_CENTER:
-                        drive_right = drive_right * 0.9
+                        drive_right = drive_right * 0.95
             self.measurements.task_done()
 
         num_seconds = meters * self.timeForwardOneMeter

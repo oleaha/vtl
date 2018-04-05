@@ -185,9 +185,10 @@ class LaneDetection(threading.Thread):
         :param lines:
         :return:
         """
-        if lines.all() and len(lines) > 0:
+        if len(lines) > 0:
             left_lane, right_lane = self.average_slope(lines)
-            y1 = image.shape[0]
+	    logging.info("LEFT LANE: " + str(left_lane)
+	    #logging.info("RIGHT LANE: " + str(right_lane)           y1 = image.shape[0]
             y2 = y1 * 0.6
             left_line = self.pixel_points(y1, y2, left_lane)
             right_line = self.pixel_points(y1, y2, right_lane)
@@ -205,7 +206,7 @@ class LaneDetection(threading.Thread):
         """
         top_center_x = 0
 
-        if len(lines) == 2:
+        if lines is not None:
             if lines[0] is not None and lines[1] is not None:
                 top_center_x = (lines[0][1][0] + lines[1][1][0]) / 2
             elif lines[0] is None:

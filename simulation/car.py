@@ -92,7 +92,7 @@ class Car:
         elif self.next_command['command'] == "half_turn":
             logging.error("Executing half turn command")
             self.MC.perform_spin(-90)
-            self.MC.perform_drive(0.21)
+            self.MC.perform_drive(0.25, use_lane_detection=False)
             self.MC.perform_spin(-90)
         self.update_self_state()
 
