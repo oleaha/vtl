@@ -230,11 +230,13 @@ class LaneDetection(threading.Thread):
 
         while not self.exitFlag:
             for frame in self.camera.capture_continuous(self.rawCapture, format="bgr", use_video_port=True):
-                if self.perform_ld:
-                    with open("calibration_matrix.txt", 'r') as f:
-                        calibration_matrix = pickle.load(f)
 
-                    img = frame.array
+                with open("calibration_matrix.txt", 'r') as f:
+                    calibration_matrix = pickle.load(f)
+
+                img = frame.array
+
+                if self.perform_ld:
                     undistorted = cv2.undistort(img, calibration_matrix['mtx'], calibration_matrix['dist'], None,
                                                 calibration_matrix['mtx'])
                     gray = self.gray_scale(img)
@@ -251,15 +253,12 @@ class LaneDetection(threading.Thread):
                         cv2.imshow("Lane Detection", final)
 
                         key = cv2.waitKey(1) & 0xFF
-                        self.rawCapture.truncate()
-                        self.rawCapture.seek(0)
+
                         if key == ord("q"):
                             break
                     else:
                         current_center = self.draw_lane_lines(undistorted, self.lane_lines(img, houghlines))
                         offset = settings.ACTUAL_CENTER - current_center
-                        self.rawCapture.truncate()
-                        self.rawCapture.seek(0)
 
                         logging.info("Adding new measurement to list - " + str(current_center))
                         self.current_center_list.append(current_center)
@@ -268,6 +267,9 @@ class LaneDetection(threading.Thread):
                             logging.info("Adding new measurements to queue - " + str(self.current_center_list[-5:]))
                             self.measurements.put(self.current_center_list[-5:])
                         # return current_center, offset
+
+                self.rawCapture.truncate()
+                self.rawCapture.seek(0)
 
     def stop_thread(self):
         self.exitFlag = True
