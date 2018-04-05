@@ -106,7 +106,7 @@ class LaneDetection(threading.Thread):
         """
         rho = 1  # Distance resolution of the accumulator in pixels
         theta = np.pi / 180  # Angle resolution of the accumulator in radians
-        threshold = 20  # Only lines greater than threshold will be returned
+        threshold = 100  # Only lines greater than threshold will be returned
         minLineLength = 50  # Line segments shorter than this is rejected
         maxLineGap = 40  # Maximum allowes gap between two points on the same line to link them
         return cv2.HoughLinesP(image, rho=rho, theta=theta, threshold=threshold,
@@ -257,18 +257,17 @@ class LaneDetection(threading.Thread):
                         break
                 else:
                     current_center = self.draw_lane_lines(undistorted, self.lane_lines(img, houghlines))
-                    logging.info("CURRENT CENTER" + str(current_center))
                     offset = settings.ACTUAL_CENTER - current_center
                     self.rawCapture.truncate()
                     self.rawCapture.seek(0)
 
-                    if len(self.current_center_list) == 5:
-                        logging.info("Adding new measurements to queue - " + str(self.current_center_list))
-                        self.measurements.put(self.current_center_list)
-                        del self.current_center_list[:]
-                    else:
-                        logging.info("Adding new measurement to list - " + str(current_center))
-                        self.current_center_list.append(current_center)
+
+		    logging.info("Adding new measurement to list - " + str(current_center))
+		    self.current_center_list.append(current_center)
+
+                    if len(self.current_center_list) % 5 == 0:
+			logging.info("Adding new measurements to queue - " + str(self.current_center_list[-5:]))
+                        self.measurements.put(self.current_center_list[-5:])
                     # return current_center, offset
 
     def stop_thread(self):
