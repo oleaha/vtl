@@ -22,7 +22,7 @@ class LaneDetection(threading.Thread):
         self.rawCapture = None
         self.current_center_list = []
         self.measurements = measurements
-        self.perform_ld = True
+        self.stop_ld = False
 
     def init_camera(self):
         self.camera = picamera.PiCamera()
@@ -236,7 +236,7 @@ class LaneDetection(threading.Thread):
 
                 img = frame.array
 
-                if self.perform_ld:
+                if self.stop_ld:
                     undistorted = cv2.undistort(img, calibration_matrix['mtx'], calibration_matrix['dist'], None,
                                                 calibration_matrix['mtx'])
                     gray = self.gray_scale(img)
@@ -253,12 +253,15 @@ class LaneDetection(threading.Thread):
                         cv2.imshow("Lane Detection", final)
 
                         key = cv2.waitKey(1) & 0xFF
-
+                        self.rawCapture.truncate()
+                        self.rawCapture.seek(0)
                         if key == ord("q"):
                             break
                     else:
                         current_center = self.draw_lane_lines(undistorted, self.lane_lines(img, houghlines))
                         offset = settings.ACTUAL_CENTER - current_center
+                        self.rawCapture.truncate()
+                        self.rawCapture.seek(0)
 
                         logging.info("Adding new measurement to list - " + str(current_center))
                         self.current_center_list.append(current_center)
@@ -266,14 +269,13 @@ class LaneDetection(threading.Thread):
                         if len(self.current_center_list) % 3 == 0:
                             logging.info("Adding new measurements to queue - " + str(self.current_center_list[-5:]))
                             self.measurements.put(self.current_center_list[-5:])
-                        # return current_center, offset
-
-                self.rawCapture.truncate()
-                self.rawCapture.seek(0)
+                else:
+                    self.rawCapture.truncate()
+                    self.rawCapture.seek(0)
 
     def stop_thread(self):
         self.exitFlag = True
         self.camera.close()
 
     def stop_ld(self, value=True):
-        self.perform_ld = value
+        self.stop_ld = value
