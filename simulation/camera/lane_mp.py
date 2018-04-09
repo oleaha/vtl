@@ -1,5 +1,5 @@
 from __future__ import division
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Event
 from simulation import settings
 
 import pickle
@@ -16,6 +16,7 @@ class LaneDetectionMP(Process):
 
     def __init__(self, measurements):
         super(LaneDetectionMP, self).__init__()
+	self.exit = Event()
         self.exitFlag = False
         self.debug = settings.LANE_DEBUG
         self.camera = None
@@ -172,6 +173,7 @@ class LaneDetectionMP(Process):
         if line is None:
             return None
         slope, intercept = line
+	logging.info("Slope: " + str(slope) + " Intercept: " + str(intercept))
         x1 = int((y1 - intercept) / slope)
         x2 = int((y2 - intercept) / slope)
         y1 = int(y1)
@@ -275,3 +277,4 @@ class LaneDetectionMP(Process):
     def stop_process(self):
         self.exitFlag = True
         self.camera.close()
+	self.exit.set()

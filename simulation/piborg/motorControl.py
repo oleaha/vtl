@@ -57,7 +57,7 @@ class MotorControlV2:
         time.sleep(num_seconds)
         self.TB.SetMotor1(0)
         self.TB.SetMotor2(0)
-        time.sleep(0.3)
+        time.sleep(0.6)
 
     def perform_spin(self, angle):
         if angle < 0.0:
@@ -95,7 +95,7 @@ class MotorControlV2:
                         drive_left = drive_left * 0.95
                     elif average > settings.ACTUAL_CENTER:
                         drive_right = drive_right * 0.95
-            self.measurements.task_done()
+            #self.measurements.task_done()
 
         num_seconds = meters * self.timeForwardOneMeter
         self.perform_move(drive_left, drive_right, num_seconds)
@@ -113,7 +113,7 @@ class MotorControlV2:
         self.TB.SetLeds(1, 0.5, 0)
 
     def stop_lane_detection(self):
-        self.LD.stop_thread()
+        self.LD.stop_process()
 
 
 class MotorControlV1(object):

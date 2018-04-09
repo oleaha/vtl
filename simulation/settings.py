@@ -34,7 +34,7 @@ PROBABILITIES = {'left': 0.0, 'right': 0.0}
 
 QUARTER_TURN_DEGREES = 90
 HALF_TURN_DEGREES = 180
-DRIVE_STEP = 0.2  # 20 centimeters per step
+DRIVE_STEP = 0.1  # 20 centimeters per step
 
 """
 NETWORK SETTINGS
