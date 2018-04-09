@@ -22,7 +22,6 @@ class LaneDetection(threading.Thread):
         self.rawCapture = None
         self.current_center_list = []
         self.measurements = measurements
-        self.stop_ld = False
 
     def init_camera(self):
         self.camera = picamera.PiCamera()
@@ -236,46 +235,41 @@ class LaneDetection(threading.Thread):
 
                 img = frame.array
 
-                if self.stop_ld:
-                    undistorted = cv2.undistort(img, calibration_matrix['mtx'], calibration_matrix['dist'], None,
-                                                calibration_matrix['mtx'])
-                    gray = self.gray_scale(img)
-                    blurred = self.gaussian_smoothing(gray, 3)
-                    edged = self.canny_detector(blurred, 50, 150)
-                    trimmed = self.region_selection(edged)
-                    houghlines = self.hough_transform(trimmed)
+                undistorted = cv2.undistort(img, calibration_matrix['mtx'], calibration_matrix['dist'], None,
+                                            calibration_matrix['mtx'])
+                gray = self.gray_scale(img)
+                blurred = self.gaussian_smoothing(gray, 3)
+                edged = self.canny_detector(blurred, 50, 150)
+                trimmed = self.region_selection(edged)
+                houghlines = self.hough_transform(trimmed)
 
-                    if self.debug:
-                        final = self.draw_lane_lines(img, self.lane_lines(img, houghlines))
-                        cv2.line(final, (0, 450), (230, 300), [0, 255, 0], 2)
-                        cv2.line(final, (720, 480), (540, 310), [0, 255, 0], 2)
-                        cv2.line(final, (230, 300), (540, 310), [0, 255, 0], 2)
-                        cv2.imshow("Lane Detection", final)
+                if len(houghlines) == 0:
+                    continue
 
-                        key = cv2.waitKey(1) & 0xFF
-                        self.rawCapture.truncate()
-                        self.rawCapture.seek(0)
-                        if key == ord("q"):
-                            break
-                    else:
-                        current_center = self.draw_lane_lines(undistorted, self.lane_lines(img, houghlines))
-                        offset = settings.ACTUAL_CENTER - current_center
-                        self.rawCapture.truncate()
-                        self.rawCapture.seek(0)
+                if self.debug:
+                    final = self.draw_lane_lines(img, self.lane_lines(img, houghlines))
+                    cv2.line(final, (0, 450), (230, 300), [0, 255, 0], 2)
+                    cv2.line(final, (720, 480), (540, 310), [0, 255, 0], 2)
+                    cv2.line(final, (230, 300), (540, 310), [0, 255, 0], 2)
+                    cv2.imshow("Lane Detection", final)
 
-                        logging.info("Adding new measurement to list - " + str(current_center))
-                        self.current_center_list.append(current_center)
-
-                        if len(self.current_center_list) % 3 == 0:
-                            logging.info("Adding new measurements to queue - " + str(self.current_center_list[-5:]))
-                            self.measurements.put(self.current_center_list[-5:])
-                else:
+                    key = cv2.waitKey(1) & 0xFF
                     self.rawCapture.truncate()
                     self.rawCapture.seek(0)
+                    if key == ord("q"):
+                        break
+                else:
+                    current_center = self.draw_lane_lines(undistorted, self.lane_lines(img, houghlines))
+                    self.rawCapture.truncate()
+                    self.rawCapture.seek(0)
+
+                    logging.info("Adding new measurement to list - " + str(current_center))
+                    self.current_center_list.append(current_center)
+
+                    if len(self.current_center_list) % 3 == 0:
+                        logging.info("Adding new measurements to queue - " + str(self.current_center_list[-5:]))
+                        self.measurements.put(self.current_center_list[-5:])
 
     def stop_thread(self):
         self.exitFlag = True
         self.camera.close()
-
-    def stop_ld(self, value=True):
-        self.stop_ld = value

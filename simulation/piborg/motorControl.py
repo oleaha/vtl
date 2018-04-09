@@ -67,12 +67,10 @@ class MotorControlV2:
             drive_left = 1.0
             drive_right = -1.0
 
-        self.LD.stop_ld(value=False)
         num_seconds = (angle / 360.0) * self.timeSpinThreeSixty
         self.perform_move(drive_left, drive_right, num_seconds)
 
     def perform_drive(self, meters, use_lane_detection=True):
-        self.LD.stop_ld(value=True)
         if meters < 0.0:
             drive_left = -1.0
             drive_right = -1.0
