@@ -243,7 +243,9 @@ class LaneDetection(threading.Thread):
                 trimmed = self.region_selection(edged)
                 houghlines = self.hough_transform(trimmed)
 
-                if len(houghlines) == 0:
+                if houghlines is None:
+                    self.rawCapture.truncate()
+                    self.rawCapture.seek(0)
                     continue
 
                 if self.debug:
