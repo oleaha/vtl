@@ -3,8 +3,10 @@ import time
 import sys
 from simulation.piborg import ThunderBorg
 from simulation.camera.lane import LaneDetection
+from simulation.camera.lane_mp import LaneDetectionMP
 import logging
-import Queue
+# import Queue
+from multiprocessing import Queue
 import numpy
 from simulation import settings
 
@@ -18,9 +20,10 @@ class MotorControlV2:
         self.TB = ThunderBorg.ThunderBorg()
         self.TB.Init()
 
-        self.measurements = Queue.LifoQueue()
+        #self.measurements = Queue.LifoQueue()
+        self.measurements = Queue()
         logging.debug("Starting LaneDetection Thread")
-        self.LD = LaneDetection(self.measurements)
+        self.LD = LaneDetectionMP(self.measurements)
         self.LD.start()
 
         if not self.TB.foundChip:
