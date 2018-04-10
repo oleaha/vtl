@@ -173,7 +173,9 @@ class LaneDetectionMP(Process):
         if line is None:
             return None
         slope, intercept = line
-	logging.info("Slope: " + str(slope) + " Intercept: " + str(intercept))
+	if slope == 0.0:
+	    return None
+	# logging.info("Slope: " + str(slope) + " Intercept: " + str(intercept))
         x1 = int((y1 - intercept) / slope)
         x2 = int((y2 - intercept) / slope)
         y1 = int(y1)
@@ -267,7 +269,7 @@ class LaneDetectionMP(Process):
                     self.rawCapture.truncate()
                     self.rawCapture.seek(0)
 
-                    logging.info("Adding new measurement to list - " + str(current_center))
+                    # logging.info("Adding new measurement to list - " + str(current_center))
                     self.current_center_list.append(current_center)
 
                     if len(self.current_center_list) % 3 == 0:

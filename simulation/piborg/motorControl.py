@@ -57,7 +57,7 @@ class MotorControlV2:
         time.sleep(num_seconds)
         self.TB.SetMotor1(0)
         self.TB.SetMotor2(0)
-        time.sleep(0.6)
+        time.sleep(0.3)
 
     def perform_spin(self, angle):
         if angle < 0.0:
@@ -85,12 +85,15 @@ class MotorControlV2:
         # TODO: Implement adjustment, only when driving straight and before straight command.
         logging.info("Lane detection queue size:" + str(self.measurements.qsize()))
         if use_lane_detection and self.measurements.qsize() > 0:
-            measure = self.measurements.get()
+	    measure = 0
+            while self.measurements.qsize() > 0:
+		measure = self.measurements.get()
 
             if len(measure) > 0:
                 measure = [x for x in measure if x > 0]
                 if len(measure) > 0:
                     average = numpy.average(measure)
+		    logging.info("AVERAGE OFFSET: " + str(round(average, 2)))
                     if average < settings.ACTUAL_CENTER:
                         drive_left = drive_left * 0.95
                     elif average > settings.ACTUAL_CENTER:
