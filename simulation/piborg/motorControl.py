@@ -73,6 +73,30 @@ class MotorControlV2:
         num_seconds = (angle / 360.0) * self.timeSpinThreeSixty
         self.perform_move(drive_left, drive_right, num_seconds)
 
+    def calculate_correction(self, drive_left, drive_right):
+        # Since Process does not support LIFO queue, we need to empty the queue in order to get the latest measurements
+        logging.info("Lane detection queue size:" + str(self.measurements.qsize()))
+        while self.measurements.qsize() > 0:
+            current_centres = self.measurements.get()
+
+            if len(current_centres) > 0:
+                # Remove all 0 values to reduce noise
+                # TODO: This cannot be done!
+                current_centres = [x for x in current_centres if x > 0]
+                if len(current_centres) > 0:
+                    avg_centre = numpy.average(current_centres)
+                    logging.info("Current average center value: " + str(round(avg_centre, 2)))
+
+                    if avg_centre > 300 and avg_centre < settings.ACTUAL_CENTER:
+                        drive_left *= 0.98
+                    elif avg_centre <= 300:
+                        drive_left *= 0.95
+                    elif avg_centre > settings.ACTUAL_CENTER and avg_centre < 440:
+                        drive_right *= 0.98
+                    elif avg_centre >= 440:
+                        drive_right *= 0.95
+        return drive_left, drive_right
+
     def perform_drive(self, meters, use_lane_detection=True):
         if meters < 0.0:
             drive_left = -1.0
@@ -82,25 +106,8 @@ class MotorControlV2:
             drive_left = 1.0
             drive_right = 1.0
 
-        # TODO: Implement adjustment, only when driving straight and before straight command.
-        logging.info("Lane detection queue size:" + str(self.measurements.qsize()))
-        if use_lane_detection and self.measurements.qsize() > 0:
-	    measure = 0
-            while self.measurements.qsize() > 0:
-		measure = self.measurements.get()
-
-            if len(measure) > 0:
-                measure = [x for x in measure if x > 0]
-                if len(measure) > 0:
-                    average = numpy.average(measure)
-		    logging.info("AVERAGE OFFSET: " + str(round(average, 2)))
-                    if average < settings.ACTUAL_CENTER:
-                        drive_left = drive_left * 0.95
-                    elif average > settings.ACTUAL_CENTER:
-                        drive_right = drive_right * 0.95
-            #self.measurements.task_done()
-
-        num_seconds = meters * self.timeForwardOneMeter
+        drive_left, drive_right = self.calculate_correction(drive_left, drive_right)
+        num_seconds = meters * self.timeForwardOneMeter  # TODO: Should time be longer if reduced power?
         self.perform_move(drive_left, drive_right, num_seconds)
 
     def stop_motors(self):
