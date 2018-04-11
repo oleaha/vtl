@@ -61,3 +61,7 @@ CAMERA_WARMUP_TIME = 0.1
 
 ACTUAL_CENTER = 370  # in pixels
 LANE_DEBUG = False
+
+
+# Traffic light
+TRAFFIC_LIGHT_INTERVAL = 5  # Seconds
