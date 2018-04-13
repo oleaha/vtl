@@ -8,7 +8,10 @@ class Send:
     def __init__(self, broadcast=False, ip=None, port=None):
         if broadcast:
             self.ip = settings.BROADCAST_IP
-            self.port = settings.BROADCAST_PORT
+            if port:
+                self.port = port
+            else:
+                self.port = settings.BROADCAST_PORT
         else:
             self.ip = ip
             self.port = port

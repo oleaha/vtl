@@ -85,15 +85,15 @@ class MotorControlV2:
         # TODO: Implement adjustment, only when driving straight and before straight command.
         logging.info("Lane detection queue size:" + str(self.measurements.qsize()))
         if use_lane_detection and self.measurements.qsize() > 0:
-	    measure = 0
+            measure = 0
             while self.measurements.qsize() > 0:
-		measure = self.measurements.get()
+                measure = self.measurements.get()
 
             if len(measure) > 0:
                 measure = [x for x in measure if x > 0]
                 if len(measure) > 0:
                     average = numpy.average(measure)
-		    logging.info("AVERAGE OFFSET: " + str(round(average, 2)))
+                    logging.info("AVERAGE OFFSET: " + str(round(average, 2)))
                     if average < settings.ACTUAL_CENTER:
                         drive_left = drive_left * 0.95
                     elif average > settings.ACTUAL_CENTER:
