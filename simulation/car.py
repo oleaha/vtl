@@ -28,6 +28,7 @@ class Car:
 
     car = {'ip': '', 'curr_pos': (), 'prev_pos': (), 'from_dir': '', 'to_dir': '', 'speed': 0}
     location_table = {}  # Table of all active robots
+    traffic_light_state = {}
 
     def __init__(self, ip, pos, from_dir, to_dir):
         self.car['ip'] = ip
@@ -45,7 +46,8 @@ class Car:
         logging.debug("car.py started")
 
         # Initialize location module
-        self.LOC = Location(self.car['curr_pos'])
+        # TODO: Remember that only one car has this feature!
+        self.LOC = Location(self.car['curr_pos'], use_traffic_light=True)
         # Initialize motor control module
         self.MC = MotorControlV2()
 
@@ -85,6 +87,10 @@ class Car:
         while not self.is_next_pos_available():
             logging.error("Next position is not available, waiting")
             time.sleep(0.5)
+
+        if self.LOC.is_next_pos_in_intersection(self.next_command['next_pos']):
+            logging.error("Next pos is intersection")
+            # TODO: Check the current status of this intersection. Have a while loop
 
         if self.next_command['command'] == "straight":
             logging.error("Executing straight command")
@@ -137,12 +143,16 @@ class Car:
             return -settings.QUARTER_TURN_DEGREES
 
     def message_handler(self, msg_type, msg):
+
         if msg_type == MessageTypes.BEACON:
             # Update location table with new data
-            self.location_table[msg['ip']] = msg
-            logging.info("Updated location table " + str(self.location_table))
+            if msg['ip'] != self.car['ip']:
+                self.location_table[msg['ip']] = msg
+                logging.error("Updated location table " + str(self.location_table))
+
         if msg_type == MessageTypes.TRAFFIC_LIGHT:
-            pass
+            # message is coming here
+            logging.error(msg)
 
     def send_beacon(self):
         """
@@ -163,11 +173,7 @@ class Car:
         receive = Receive(self.car['ip'])
         while self.RUNNING:
             msg = receive.listen()
-
-            # Skip messages where sender is the same as receiver
-            if msg['ip'] != self.car['ip']:
-                self.message_handler(msg['message_type'], msg)
-
+            self.message_handler(msg['message_type'], msg)
         receive.close()
 
 

@@ -46,7 +46,7 @@ class TrafficLight:
 
     def operate(self):
         self.start_timer()
-        send = Send(broadcast=True, port=settings.TRAFFIC_LIGHT_BROADCAST_PORT)
+        send = Send(broadcast=True, port=settings.BROADCAST_PORT)
         while not self.exitFlag:
             # Only change to/from when timer exceeds the interval
             if self.get_time_difference() >= settings.TRAFFIC_LIGHT_INTERVAL:
@@ -65,6 +65,7 @@ class TrafficLight:
 
             # Send red light to all other lanes
             # TODO: Maybe not necessary
+            '''
             if self.current_state != 0:
                 send.send(MessageTypes.TRAFFIC_LIGHT, self.create_message("Red"))
             if self.current_state != 1:
@@ -73,7 +74,9 @@ class TrafficLight:
                 send.send(MessageTypes.TRAFFIC_LIGHT, self.create_message("Red"))
             if self.current_state != 3:
                 send.send(MessageTypes.TRAFFIC_LIGHT, self.create_message("Red"))
+            '''
             time.sleep(settings.TRAFFIC_LIGHT_INTERVAL)
+
         send.close()
 
     def stop(self):

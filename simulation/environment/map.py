@@ -8,13 +8,14 @@ class Map:
     map = []
     intersections = []
 
-    def __init__(self):
+    def __init__(self, use_traffic_light):
+        self.use_traffic_light = use_traffic_light
         self.create_intersections()
         self.create_map()
 
     def create_intersections(self):
         for intersection in settings.INTERSECTIONS:
-            self.intersections.append(Intersection(intersection))
+            self.intersections.append(Intersection(intersection, self.use_traffic_light))
 
     def create_map(self):
         self.map = numpy.array([[0 for j in range(settings.MAP_SIZE_X)] for i in range(settings.MAP_SIZE_Y)])

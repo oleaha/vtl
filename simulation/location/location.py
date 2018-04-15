@@ -10,9 +10,9 @@ class Location:
     car = ()
     map = ()
 
-    def __init__(self, initial_car_position):
+    def __init__(self, initial_car_position, use_traffic_light=False):
         self.car = initial_car_position
-        self.map = Map()
+        self.map = Map(use_traffic_light)
 
     def update_car_pos(self, dir):
         next_pos = ()
