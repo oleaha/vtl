@@ -46,7 +46,8 @@ class Map:
     def print_map(self, car_pos, car_ip):
         # Make a copy of the map
         tmp_map = copy.copy(self.map)
-        tmp_map[car_pos] = 8
+        for car in car_pos:
+            tmp_map[car] = 8
         filename = "car_" + car_ip + ".txt"
 
         for row in tmp_map:

@@ -39,7 +39,7 @@ class Car:
         self.RUNNING = True
 
         # Thread logger
-        logging.basicConfig(level=logging.INFO,
+        logging.basicConfig(level=logging.ERROR,
                             format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s',
                             )
         logging.debug("car.py started")
@@ -62,13 +62,13 @@ class Car:
         self.receive_thread = threading.Thread(target=self.receive, name="Receive")
         self.receive_thread.start()
 
-        self.LOC.map.print_map(self.car['curr_pos'], self.car['ip'])
+        self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
 
         try:
             while True:
                 if self.plan.qsize() > 5:
                     self.execute_command()
-                    self.LOC.map.print_map(self.car['curr_pos'], self.car['ip'])
+                    self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
                     logging.info("---------")
         except KeyboardInterrupt:
             self.PLANNER.stop_thread()
@@ -81,6 +81,10 @@ class Car:
     def execute_command(self):
         self.next_command = self.plan.get()
         logging.error("Next command to execute: " + str(self.next_command))
+
+        while not self.is_next_pos_available():
+            logging.error("Next position is not available, waiting")
+            time.sleep(0.5)
 
         if self.next_command['command'] == "straight":
             logging.error("Executing straight command")
@@ -101,6 +105,14 @@ class Car:
         self.car['curr_pos'] = self.next_command['next_pos']
         self.car['to_dir'] = self.next_command['to_dir']
         self.car['from_dir'] = self.next_command['from_dir']
+
+    def is_next_pos_available(self):
+        if len(self.location_table) > 0:
+            for ip, location in self.location_table.iteritems():
+                if location['curr_pos'] == self.next_command['next_pos']:
+                    logging.error("NEXT POS IS NOT AVAILABLE")
+                    return False
+        return True
 
     # TODO: Refactor to UTILS
     def calculate_quarter_spin_degree(self):
@@ -129,6 +141,8 @@ class Car:
             # Update location table with new data
             self.location_table[msg['ip']] = msg
             logging.info("Updated location table " + str(self.location_table))
+        if msg_type == MessageTypes.TRAFFIC_LIGHT:
+            pass
 
     def send_beacon(self):
         """
