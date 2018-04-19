@@ -83,6 +83,11 @@ class Location:
     def get_car_pos(self):
         return self.car
 
+    def get_intersection(self, pos):
+        for intersection in self.map.get_intersections():
+            if pos in intersection.get_pos():
+                return intersection
+
     """ Check if a given position is in an intersection """
     def in_intersection(self, pos):
         return self.map.get_map()[pos] == 3

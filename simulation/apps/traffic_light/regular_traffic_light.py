@@ -39,9 +39,9 @@ class TrafficLight:
 
     def create_message(self, color):
         return {
-            'TRAFFIC_LIGHT_STATE': str(self.current_state),
-            "COLOR": color,
-            'INTERSECTION': self.intersection
+            'state': str(self.current_state),
+            "color": color,
+            'intersection': self.intersection
         }
 
     def operate(self):
@@ -51,30 +51,17 @@ class TrafficLight:
             # Only change to/from when timer exceeds the interval
             if self.get_time_difference() >= settings.TRAFFIC_LIGHT_INTERVAL:
                 # Send out a yellow light
-                send.send(MessageTypes.TRAFFIC_LIGHT, self.create_message("Yellow"))
+                send.send(MessageTypes.TRAFFIC_LIGHT, self.create_message("yellow"))
 
                 # Allow cars to exit the intersection
                 time.sleep(settings.TRAFFIC_LIGHT_YELLOW_DURATION)
 
                 # Restart the timer and increment the current state
                 self.start_timer()
-                self.current_state = (self.current_state + 1) % 3
+                self.current_state = (self.current_state + 1) % 4
 
             # Inform which lane has green light
-            send.send(MessageTypes.TRAFFIC_LIGHT, self.create_message("Green"))
-
-            # Send red light to all other lanes
-            # TODO: Maybe not necessary
-            '''
-            if self.current_state != 0:
-                send.send(MessageTypes.TRAFFIC_LIGHT, self.create_message("Red"))
-            if self.current_state != 1:
-                send.send(MessageTypes.TRAFFIC_LIGHT, self.create_message("Red"))
-            if self.current_state != 2:
-                send.send(MessageTypes.TRAFFIC_LIGHT, self.create_message("Red"))
-            if self.current_state != 3:
-                send.send(MessageTypes.TRAFFIC_LIGHT, self.create_message("Red"))
-            '''
+            send.send(MessageTypes.TRAFFIC_LIGHT, self.create_message("green"))
             time.sleep(settings.TRAFFIC_LIGHT_INTERVAL)
 
         send.close()

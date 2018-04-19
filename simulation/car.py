@@ -12,6 +12,7 @@ from simulation.network.receive import Receive
 import settings
 from simulation.utils.direction import Direction
 from simulation.utils.message_types import MessageTypes
+from simulation.utils.utils import calculate_quarter_spin_degree
 
 import logging
 import Queue
@@ -29,6 +30,9 @@ class Car:
     car = {'ip': '', 'curr_pos': (), 'prev_pos': (), 'from_dir': '', 'to_dir': '', 'speed': 0}
     location_table = {}  # Table of all active robots
     traffic_light_state = {}
+    plan = None
+    beacon_thread = None
+    receive_thread = None
 
     def __init__(self, ip, pos, from_dir, to_dir):
         self.car['ip'] = ip
@@ -39,6 +43,29 @@ class Car:
         self.next_command = None
         self.RUNNING = True
 
+        self.init_simulation()
+
+        self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
+
+        self.simulation_thread()
+
+    def simulation_thread(self):
+        try:
+            while True:
+                # TODO: REGULAR TRAFFIC LIGHT!
+                if self.plan.qsize() > 5 and len(self.traffic_light_state) > 0:
+                    self.execute_command()
+                    self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
+                    logging.info("---------")
+        except KeyboardInterrupt:
+            self.PLANNER.stop_thread()
+            self.MC.stop_motors()
+            self.MC.stop_lane_detection()
+            self.RUNNING = False
+            logging.debug("All systems stopped")
+            sys.exit()
+
+    def init_simulation(self):
         # Thread logger
         logging.basicConfig(level=logging.ERROR,
                             format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s',
@@ -57,28 +84,13 @@ class Car:
         self.PLANNER = Planner(1, "Planner", self.car['curr_pos'], self.car['to_dir'], self.plan)
         self.PLANNER.start()
 
-        self.beacon_thread = threading.Thread(target=self.send_beacon, name="Send Beacon")  # TODO: No sure if this is the best solution
+        self.beacon_thread = threading.Thread(target=self._send_beacon,
+                                              name="Send Beacon")  # TODO: No sure if this is the best solution
         self.beacon_thread.start()
 
         # Initialize network receive message module
-        self.receive_thread = threading.Thread(target=self.receive, name="Receive")
+        self.receive_thread = threading.Thread(target=self._receive, name="Receive")
         self.receive_thread.start()
-
-        self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
-
-        try:
-            while True:
-                if self.plan.qsize() > 5:
-                    self.execute_command()
-                    self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
-                    logging.info("---------")
-        except KeyboardInterrupt:
-            self.PLANNER.stop_thread()
-            self.MC.stop_motors()
-            self.MC.stop_lane_detection()
-            self.RUNNING = False
-            logging.debug("All systems stopped")
-            sys.exit()
 
     def execute_command(self):
         self.next_command = self.plan.get()
@@ -90,14 +102,38 @@ class Car:
 
         if self.LOC.is_next_pos_in_intersection(self.next_command['next_pos']):
             logging.error("Next pos is intersection")
-            # TODO: Check the current status of this intersection. Have a while loop
+            intersection = self.LOC.get_intersection(self.next_command['next_pos'])
+            intersection_id = sum(map(sum, intersection.get_pos()))
+
+            if intersection_id in self.traffic_light_state:
+                traffic_light = self.traffic_light_state[intersection_id]
+
+                if self.next_command['from_dir'] == Direction.NORTH:
+                    while self.traffic_light_state[intersection_id]['state'] != "0":
+                        logging.error("Waiting for green light from north")
+                        time.sleep(1)
+                elif self.next_command['from_dir'] == Direction.SOUTH:
+                    while self.traffic_light_state[intersection_id]['state'] != "1":
+                        logging.error("Waiting for green light from south")
+                        time.sleep(1)
+                elif self.next_command['from_dir'] == Direction.EAST:
+                    while self.traffic_light_state[intersection_id]['state'] != "2":
+                        logging.error("Waiting for green light from east")
+                        time.sleep(1)
+                elif self.next_command['from_dir'] == Direction.WEST:
+                    while self.traffic_light_state[intersection_id]['state'] != "3":
+                        logging.error("Waiting for green light from west")
+                        time.sleep(1)
 
         if self.next_command['command'] == "straight":
             logging.error("Executing straight command")
             self.MC.perform_drive(0.2)
         elif self.next_command['command'] == "quarter_turn":
             logging.error("Executing quarter turn command")
-            self.MC.perform_spin(self.calculate_quarter_spin_degree())
+            self.MC.perform_spin(calculate_quarter_spin_degree(
+                from_dir=self.next_command['from_dir'],
+                to_dir=self.next_command['to_dir']
+            ))
             # TODO: When turning left, go one step up, then 90 degree turn
         elif self.next_command['command'] == "half_turn":
             logging.error("Executing half turn command")
@@ -106,12 +142,6 @@ class Car:
             self.MC.perform_spin(-90)
         self.update_self_state()
 
-    def update_self_state(self):
-        self.car['prev_pos'] = self.car['curr_pos']
-        self.car['curr_pos'] = self.next_command['next_pos']
-        self.car['to_dir'] = self.next_command['to_dir']
-        self.car['from_dir'] = self.next_command['from_dir']
-
     def is_next_pos_available(self):
         if len(self.location_table) > 0:
             for ip, location in self.location_table.iteritems():
@@ -119,28 +149,6 @@ class Car:
                     logging.error("NEXT POS IS NOT AVAILABLE")
                     return False
         return True
-
-    # TODO: Refactor to UTILS
-    def calculate_quarter_spin_degree(self):
-        from_dir = self.next_command['from_dir']
-        to_dir = self.next_command['to_dir']
-
-        if from_dir == Direction.WEST:
-            if to_dir == Direction.NORTH:
-                return settings.QUARTER_TURN_DEGREES
-            return -settings.QUARTER_TURN_DEGREES
-        elif from_dir == Direction.EAST:
-            if to_dir == Direction.SOUTH:
-                return settings.QUARTER_TURN_DEGREES
-            return -settings.QUARTER_TURN_DEGREES
-        elif from_dir == Direction.NORTH:
-            if to_dir == Direction.WEST:
-                return settings.QUARTER_TURN_DEGREES
-            return -settings.QUARTER_TURN_DEGREES
-        else:
-            if to_dir == Direction.EAST:
-                return settings.QUARTER_TURN_DEGREES
-            return -settings.QUARTER_TURN_DEGREES
 
     def message_handler(self, msg_type, msg):
 
@@ -152,9 +160,17 @@ class Car:
 
         if msg_type == MessageTypes.TRAFFIC_LIGHT:
             # message is coming here
+            i_id = sum(map(sum, msg['intersection']))
             logging.error(msg)
+            self.traffic_light_state[i_id] = msg
 
-    def send_beacon(self):
+    def update_self_state(self):
+        self.car['prev_pos'] = self.car['curr_pos']
+        self.car['curr_pos'] = self.next_command['next_pos']
+        self.car['to_dir'] = self.next_command['to_dir']
+        self.car['from_dir'] = self.next_command['from_dir']
+
+    def _send_beacon(self):
         """
         Sends a beacon broadcast message every with car info every x seconds.
         """
@@ -165,7 +181,7 @@ class Car:
             time.sleep(settings.BROADCAST_STEP)
         send.close()
 
-    def receive(self):
+    def _receive(self):
         """
         Listens for broadcast messages on the network. Update location table if sender is not the same as receiver
         :return:
