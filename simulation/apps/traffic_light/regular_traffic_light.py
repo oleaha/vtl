@@ -1,6 +1,6 @@
 import time
 from simulation import settings
-from simulation.network.send import Send
+from simulation.network.send import Send, SendMulticast
 import threading
 import logging
 
@@ -46,7 +46,7 @@ class TrafficLight:
 
     def operate(self):
         self.start_timer()
-        send = Send(broadcast=True, port=settings.BROADCAST_PORT)
+        send = SendMulticast(broadcast=True, port=settings.BROADCAST_PORT)
         while not self.exitFlag:
             # Only change to/from when timer exceeds the interval
             if self.get_time_difference() >= settings.TRAFFIC_LIGHT_INTERVAL:

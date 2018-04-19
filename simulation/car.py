@@ -7,8 +7,8 @@ from simulation.location.location import Location
 #from simulation.piborg.motorControl import MotorControlV2
 from simulation.piborg.motorControlMock import MotorControlV2
 from simulation.planner.planner import Planner
-from simulation.network.send import Send
-from simulation.network.receive import Receive
+from simulation.network.send import Send, SendMulticast
+from simulation.network.receive import Receive, ReceiveMulticast
 import settings
 from simulation.utils.direction import Direction
 from simulation.utils.message_types import MessageTypes
@@ -174,7 +174,7 @@ class Car:
         """
         Sends a beacon broadcast message every with car info every x seconds.
         """
-        send = Send(broadcast=True)
+        send = SendMulticast(broadcast=True)
         while self.RUNNING:
             logging.debug("Sending beacon")
             send.send(MessageTypes.BEACON, self.car)
@@ -186,7 +186,7 @@ class Car:
         Listens for broadcast messages on the network. Update location table if sender is not the same as receiver
         :return:
         """
-        receive = Receive(self.car['ip'])
+        receive = ReceiveMulticast(self.car['ip'])
         while self.RUNNING:
             msg = receive.listen()
             self.message_handler(msg['message_type'], msg)

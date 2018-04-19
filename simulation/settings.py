@@ -50,6 +50,9 @@ https://www.sans.org/security-resources/sec560/netcat_cheat_sheet_v1.pdf
 BROADCAST_IP = "127.255.255.255"
 BROADCAST_PORT = 5005
 BROADCAST_STEP = 3  # Send beacons every 1 second
+# Multicast
+MULTICAST_GROUP_IP = "224.3.29.71"
+MULTICAST_PORT = 10000
 
 
 # Lane detection settings
