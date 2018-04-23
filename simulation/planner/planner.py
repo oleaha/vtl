@@ -29,18 +29,18 @@ class Planner(threading.Thread):
         self.LOC = Location(self.position)
 
     def run(self):
-        logging.debug("thread started")
+        logging.debug("Planner started")
         self.planner()
-        logging.debug("thread stopped")
+        logging.debug("Planner stopped")
 
     def planner(self):
         while not self.exitFlag:
             if self.plan.qsize() < 6:
                 self.calculate_next_step()
-                logging.info("Returned pos: " + str(self.position[0]) + "," + str(self.position[1]))
+                #logging.info("Returned pos: " + str(self.position[0]) + "," + str(self.position[1]))
 
     def calculate_next_step(self):
-        logging.debug("Calculating next step")
+        #logging.debug("Calculating next step")
         # Only turn in intersection if the previous position was not in an intersection
         if self.LOC.in_intersection(self.position) and not self.LOC.in_intersection(self.prev_pos):
             prob = random.uniform(0, 1)
@@ -77,7 +77,7 @@ class Planner(threading.Thread):
             logging.debug("quarter_turn: new pos is out-of-bounds, rejecting pos")
             return
 
-        logging.debug("new pos accepted: " + str(new_pos))
+        logging.debug("New pos accepted: " + str(new_pos))
 
         self.plan.put(
             {'command': 'quarter_turn', 'next_pos': new_pos, 'to_dir': direction,

@@ -32,8 +32,8 @@ class ReceiveMulticast:
             self.group = socket.inet_aton(settings.MULTICAST_GROUP_IP)
             mreq = struct.pack('4sL', self.group, socket.INADDR_ANY)
             self.socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-        except socket.error:
-            logging.error("Could not create socket, error: " + str(socket.error.message))
+        except socket.error, msg:
+            logging.error("Could not create socket, error: " + str(msg))
 
     def listen(self):
         logging.debug("Listening...")

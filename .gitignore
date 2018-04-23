@@ -12,3 +12,4 @@ log.txt
 test.txt
 .pytest_cache
 car*.txt
+*.log

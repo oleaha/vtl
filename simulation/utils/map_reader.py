@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.getcwd())
 
-from simulation.network.receive import Receive
+from simulation.network.receive import Receive, ReceiveMulticast
 from simulation.utils.message_types import MessageTypes
 from simulation.environment.map import Map
 
@@ -11,10 +11,10 @@ class MapReader:
     running = False
 
     def __init__(self):
-        self.receive = Receive("127.0.0.15")
+        self.receive = ReceiveMulticast("127.0.0.15")
         self.running = True
         self.location_table = {}
-        self.map = Map()
+        self.map = Map(use_traffic_light=False)
         self.cars = []
 
         while self.running:
@@ -34,3 +34,6 @@ class MapReader:
 
         print self.cars
         self.map.print_map(self.cars, "127.0.0.15")
+
+
+m = MapReader()

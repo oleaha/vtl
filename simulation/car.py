@@ -4,8 +4,8 @@ import os
 sys.path.append(os.getcwd())
 
 from simulation.location.location import Location
-#from simulation.piborg.motorControl import MotorControlV2
-from simulation.piborg.motorControlMock import MotorControlV2
+from simulation.piborg.motorControl import MotorControlV2
+#from simulation.piborg.motorControlMock import MotorControlV2
 from simulation.planner.planner import Planner
 from simulation.network.send import Send, SendMulticast
 from simulation.network.receive import Receive, ReceiveMulticast
@@ -34,7 +34,7 @@ class Car:
     beacon_thread = None
     receive_thread = None
 
-    def __init__(self, ip, pos, from_dir, to_dir):
+    def __init__(self, ip, pos, from_dir, to_dir, use_traffic_light=False):
         self.car['ip'] = ip
         self.car['curr_pos'] = pos
         self.car['prev_pos'] = pos
@@ -42,6 +42,7 @@ class Car:
         self.car['from_dir'] = from_dir
         self.next_command = None
         self.RUNNING = True
+        self.use_traffic_light = use_traffic_light
 
         self.init_simulation()
 
@@ -69,12 +70,13 @@ class Car:
         # Thread logger
         logging.basicConfig(level=logging.ERROR,
                             format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s',
+                            filename='log_' + str(self.car['ip']) + '.log'
                             )
         logging.debug("car.py started")
 
         # Initialize location module
         # TODO: Remember that only one car has this feature!
-        self.LOC = Location(self.car['curr_pos'], use_traffic_light=True)
+        self.LOC = Location(self.car['curr_pos'], use_traffic_light=self.use_traffic_light)
         # Initialize motor control module
         self.MC = MotorControlV2()
 
@@ -142,6 +144,7 @@ class Car:
             self.MC.perform_spin(-90)
         self.update_self_state()
 
+    # TODO: Not working
     def is_next_pos_available(self):
         if len(self.location_table) > 0:
             for ip, location in self.location_table.iteritems():
@@ -176,9 +179,9 @@ class Car:
         """
         send = SendMulticast(broadcast=True)
         while self.RUNNING:
-            logging.debug("Sending beacon")
             send.send(MessageTypes.BEACON, self.car)
             time.sleep(settings.BROADCAST_STEP)
+        logging.debug("Shutting down sender")
         send.close()
 
     def _receive(self):
@@ -190,10 +193,15 @@ class Car:
         while self.RUNNING:
             msg = receive.listen()
             self.message_handler(msg['message_type'], msg)
+        logging.debug("Shutting down receiver")
         receive.close()
 
 
 if len(sys.argv) > 1:
-    c = Car(str(sys.argv[1]), (3, 7), 'e', 'w')
+    if sys.argv[2] == "True":
+        traffic_light = True
+    else:
+        traffic_light = False
+    c = Car(str(sys.argv[1]), (3, 7), 'e', 'w', traffic_light)
 else:
-    c = Car('192.168.1.1', (3, 7), 'e', 'w')
+    c = Car('192.168.1.1', (3, 7), 'e', 'w', False)
