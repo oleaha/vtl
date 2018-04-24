@@ -68,7 +68,7 @@ class Car:
 
     def init_simulation(self):
         # Thread logger
-        logging.basicConfig(level=logging.ERROR,
+        logging.basicConfig(level=logging.DEBUG,
                             format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s',
                             filename='log_' + str(self.car['ip']) + '.log'
                             )
@@ -142,6 +142,7 @@ class Car:
             self.MC.perform_spin(-90)
             self.MC.perform_drive(0.25, use_lane_detection=False)
             self.MC.perform_spin(-90)
+	    time.sleep(2)
         self.update_self_state()
 
     # TODO: Not working

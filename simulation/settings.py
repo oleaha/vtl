@@ -62,7 +62,7 @@ CAMERA_VFLIP = False
 CAMERA_HFLIP = False
 CAMERA_WARMUP_TIME = 0.1
 
-ACTUAL_CENTER = 370  # in pixels
+ACTUAL_CENTER = 360  # in pixels
 LANE_DEBUG = False
 
 

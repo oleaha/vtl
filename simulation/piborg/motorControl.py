@@ -40,7 +40,7 @@ class MotorControlV2:
             sys.exit()
 
         self.TB.SetCommsFailsafe(False)
-        self.timeForwardOneMeter = 3.15
+        self.timeForwardOneMeter = 3.0
 
         self.timeSpinThreeSixty = 2.37
         self.voltageIn = 12.0
@@ -57,7 +57,7 @@ class MotorControlV2:
         time.sleep(num_seconds)
         self.TB.SetMotor1(0)
         self.TB.SetMotor2(0)
-        time.sleep(0.3)
+        time.sleep(0.8)
 
     def perform_spin(self, angle):
         if angle < 0.0:
@@ -95,9 +95,28 @@ class MotorControlV2:
                     average = numpy.average(measure)
                     logging.info("AVERAGE OFFSET: " + str(round(average, 2)))
                     if average < settings.ACTUAL_CENTER:
-                        drive_left = drive_left * 0.95
+			if average < 290:
+			    drive_left = drive_left * 0.85
+			    logging.debug("Adjusting offset by 15% on left")
+			elif average < 320:
+			    drive_left = drive_left * 0.9
+			    logging.debug("Adjusting offset by 10% on left")
+			elif average < 330:
+			    logging.debug("Adjusting offset by %5 on left")
+			    drive_left = drive_left * 0.95
+			else:
+			    logging.debug("Adjusting offset by 2% on left")
+			    drive_left = drive_left * 0.98
                     elif average > settings.ACTUAL_CENTER:
-                        drive_right = drive_right * 0.95
+			if average > 400:
+			    logging.debug("Adjusting offset by 10% on right")
+			    drive_right = drive_right * 0.9
+			elif average > 390:
+			    logging.debug("Adjusting offset by 5% on right")
+			    drive_right = drive_right * 0.95
+			elif average > 370:
+			    logging.debug("Adjusting offset by 2% on right")
+			    drive_right = drive_right * 0.98
             #self.measurements.task_done()
 
         num_seconds = meters * self.timeForwardOneMeter

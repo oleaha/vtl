@@ -13,3 +13,5 @@ test.txt
 .pytest_cache
 car*.txt
 *.log
+startup.sh
+
