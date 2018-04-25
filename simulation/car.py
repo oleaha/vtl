@@ -33,6 +33,7 @@ class Car:
     plan = None
     beacon_thread = None
     receive_thread = None
+    statistics = {}
 
     def __init__(self, ip, pos, from_dir, to_dir, use_traffic_light=False):
         self.car['ip'] = ip
@@ -59,6 +60,7 @@ class Car:
                     self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
                     logging.info("---------")
         except KeyboardInterrupt:
+            logging.info("STATISTICS: " + str(self.statistics))
             self.PLANNER.stop_thread()
             self.MC.stop_motors()
             self.MC.stop_lane_detection()
@@ -126,6 +128,7 @@ class Car:
                     while self.traffic_light_state[intersection_id]['state'] != "3":
                         logging.error("Waiting for green light from west")
                         time.sleep(1)
+                self.statistics['wait_time'] += 1
 
         if self.next_command['command'] == "straight":
             logging.error("Executing straight command")
@@ -142,7 +145,7 @@ class Car:
             self.MC.perform_spin(-90)
             self.MC.perform_drive(0.25, use_lane_detection=False)
             self.MC.perform_spin(-90)
-	    time.sleep(2)
+            time.sleep(2)
         self.update_self_state()
 
     # TODO: Not working
