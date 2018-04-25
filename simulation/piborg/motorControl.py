@@ -104,7 +104,7 @@ class MotorControlV2:
 			elif average < 330:
 			    logging.debug("Adjusting offset by %5 on left")
 			    drive_left = drive_left * 0.95
-			else:
+			elif average < 355:
 			    logging.debug("Adjusting offset by 2% on left")
 			    drive_left = drive_left * 0.98
                     elif average > settings.ACTUAL_CENTER:
