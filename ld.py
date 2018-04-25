@@ -3,7 +3,7 @@ from multiprocessing import Queue
 import time
 import logging
 
-#logging.basicConfig(level=logging.DEBUG, format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s')
 
 
 q = Queue()

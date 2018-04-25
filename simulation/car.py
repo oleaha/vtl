@@ -44,6 +44,7 @@ class Car:
         self.next_command = None
         self.RUNNING = True
         self.use_traffic_light = use_traffic_light
+	self.statistics['wait_time'] = 0
 
         self.init_simulation()
 

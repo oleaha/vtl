@@ -158,7 +158,11 @@ class LaneDetectionMP(Process):
                         right_weights.append((length))
             left_lane = np.dot(left_weights, left_lines) / np.sum(left_weights) if len(left_weights) > 0 else None
             right_lane = np.dot(right_weights, right_lines) / np.sum(right_weights) if len(right_weights) > 0 else None
-            return left_lane, right_lane
+	    if left_lane is not None and left_lane[0] > -0.1:
+		left_lane = None
+	    if right_lane is not None and right_lane[0] < 0.1:
+		right_lane = None
+	    return left_lane, right_lane
         return 0, 0
 
     @staticmethod
