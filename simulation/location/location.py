@@ -74,7 +74,7 @@ class Location:
         return self.car
 
     def check_out_of_bounds(self, pos):
-        logging.debug("Check if pos is OOB: " + str(pos))
+        #logging.debug("Check if pos is OOB: " + str(pos))
         if pos[0] < 0 or pos[0] > settings.MAP_SIZE_Y - 1 or pos[1] < 0 or pos[1] > settings.MAP_SIZE_X - 1:
             logging.debug("Pos is OOB")
             return True

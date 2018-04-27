@@ -59,7 +59,8 @@ class Car:
                 if self.plan.qsize() > 5 and len(self.traffic_light_state) > 0:
                     self.execute_command()
                     self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
-                    logging.info("---------")
+                    time.sleep(2)
+		    logging.info("---------")
         except KeyboardInterrupt:
             logging.info("STATISTICS: " + str(self.statistics))
             self.PLANNER.stop_thread()
@@ -133,7 +134,7 @@ class Car:
 
         if self.next_command['command'] == "straight":
             logging.error("Executing straight command")
-            self.MC.perform_drive(0.2)
+            self.MC.perform_drive(settings.DRIVE_STEP)
         elif self.next_command['command'] == "quarter_turn":
             logging.error("Executing quarter turn command")
             self.MC.perform_spin(calculate_quarter_spin_degree(
@@ -207,6 +208,6 @@ if len(sys.argv) > 1:
         traffic_light = True
     else:
         traffic_light = False
-    c = Car(str(sys.argv[1]), (3, 7), 'e', 'w', traffic_light)
+    c = Car(str(sys.argv[1]), (5, 11), 'e', 'w', traffic_light)
 else:
     c = Car('192.168.1.1', (3, 7), 'e', 'w', False)

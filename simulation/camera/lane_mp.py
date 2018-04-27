@@ -277,7 +277,7 @@ class LaneDetectionMP(Process):
                     self.current_center_list.append(current_center)
 
                     if len(self.current_center_list) % 3 == 0:
-                        logging.info("Adding new measurements to queue - " + str(self.current_center_list[-5:]))
+                        #logging.info("Adding new measurements to queue - " + str(self.current_center_list[-5:]))
                         self.measurements.put(self.current_center_list[-5:])
 
     def stop_process(self):

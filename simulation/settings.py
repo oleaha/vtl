@@ -18,23 +18,23 @@ INTERSECTIONS = [
 """
 
 # Small map
-MAP_SIZE_X = 8
-MAP_SIZE_Y = 8
+MAP_SIZE_X = 12
+MAP_SIZE_Y = 12
 
-ROADS_X = [3, 4]
-ROADS_Y = [3, 4]
+ROADS_X = [5, 6]
+ROADS_Y = [5, 6]
 
 INTERSECTIONS = [
-    ((4, 3), (3, 3), (3, 4), (4, 4))
+    ((5, 5), (5, 6), (6, 5), (6, 6))
 ]
 
 
 
-PROBABILITIES = {'left': 0.0, 'right': 0.0}
+PROBABILITIES = {'left': 0.99, 'right': 0.0}
 
 QUARTER_TURN_DEGREES = 90
 HALF_TURN_DEGREES = 180
-DRIVE_STEP = 0.1  # 20 centimeters per step
+DRIVE_STEP = 0.25  # 20 centimeters per step
 
 """
 NETWORK SETTINGS
@@ -49,7 +49,7 @@ https://www.sans.org/security-resources/sec560/netcat_cheat_sheet_v1.pdf
 # We are using the broadcast option for UDP so this address needs to be a "certified" broadcast address
 BROADCAST_IP = "127.255.255.255"
 BROADCAST_PORT = 5005
-BROADCAST_STEP = 3  # Send beacons every 1 second
+BROADCAST_STEP = 1  # Send beacons every 1 second
 # Multicast
 MULTICAST_GROUP_IP = "224.3.29.71"
 MULTICAST_PORT = 10000
