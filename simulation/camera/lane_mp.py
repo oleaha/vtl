@@ -149,7 +149,8 @@ class LaneDetectionMP(Process):
                     slope = (y2 - y1) / (x2 - x1)
                     intercept = y1 - (slope * x1)
                     length = np.sqrt(((y2 - y1) ** 2) + ((x2 - x1) ** 2))
-
+		    if slope < 0.1 and slope > -0.1:
+			continue
                     if slope < 0:
                         left_lines.append((slope, intercept))
                         left_weights.append((length))
@@ -262,6 +263,10 @@ class LaneDetectionMP(Process):
                     cv2.line(final, (720, 480), (540, 310), [0, 255, 0], 2)
                     cv2.line(final, (230, 300), (540, 310), [0, 255, 0], 2)
                     cv2.imshow("Lane Detection", final)
+
+		    self.current_center_list.append(final)
+		    if len(self.current_center_list) % 3 == 0:
+			self.measurements.put(self.current_center_list[-5:])
 
                     key = cv2.waitKey(1) & 0xFF
                     self.rawCapture.truncate()

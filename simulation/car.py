@@ -59,7 +59,7 @@ class Car:
                 if self.plan.qsize() > 5 and len(self.traffic_light_state) > 0:
                     self.execute_command()
                     self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
-                    time.sleep(2)
+                    #time.sleep(2)
 		    logging.info("---------")
         except KeyboardInterrupt:
             logging.info("STATISTICS: " + str(self.statistics))
@@ -100,14 +100,14 @@ class Car:
 
     def execute_command(self):
         self.next_command = self.plan.get()
-        logging.error("Next command to execute: " + str(self.next_command))
+        logging.error("1: Next command to execute: " + str(self.next_command))
 
         while not self.is_next_pos_available():
-            logging.error("Next position is not available, waiting")
+            logging.error("2: Next position is not available, waiting")
             time.sleep(0.5)
 
-        if self.LOC.is_next_pos_in_intersection(self.next_command['next_pos']):
-            logging.error("Next pos is intersection")
+        if self.LOC.is_next_pos_in_intersection(self.next_command['next_pos']) and not self.LOC.is_next_pos_in_intersection(self.car['curr_pos']):
+            logging.error("3: Next pos is intersection")
             intersection = self.LOC.get_intersection(self.next_command['next_pos'])
             intersection_id = sum(map(sum, intersection.get_pos()))
 
@@ -133,17 +133,50 @@ class Car:
                 self.statistics['wait_time'] += 1
 
         if self.next_command['command'] == "straight":
-            logging.error("Executing straight command")
+            logging.error("4: Executing straight command")
             self.MC.perform_drive(settings.DRIVE_STEP)
+
         elif self.next_command['command'] == "quarter_turn":
-            logging.error("Executing quarter turn command")
-            self.MC.perform_spin(calculate_quarter_spin_degree(
-                from_dir=self.next_command['from_dir'],
-                to_dir=self.next_command['to_dir']
-            ))
-            # TODO: When turning left, go one step up, then 90 degree turn
+            logging.error("5: Executing quarter turn command")
+            from_dir = self.next_command['from_dir']
+	    to_dir = self.next_command['to_dir']
+	    turn = ""
+	    if from_dir == Direction.WEST:
+		if to_dir == Direction.SOUTH:
+		    turn = "left"
+		else:
+		    turn = "right"
+	    if from_dir == Direction.SOUTH:
+		if to_dir == Direction.EAST:
+		    turn = "left"
+		else:
+		    turn = "right"
+	    if from_dir == Direction.EAST:
+		if to_dir == Direction.NORTH:
+		    turn = "left"
+		else:
+		    turn = "right"
+	    if from_dir == Direction.NORTH:
+		if to_dir == Direction.WEST:
+		    turn = "left"
+		else:
+		    turn = "right"
+	    if turn == "right":
+	    	self.MC.perform_spin(calculate_quarter_spin_degree(
+                    from_dir=self.next_command['from_dir'],
+                    to_dir=self.next_command['to_dir']
+            	))
+	        self.MC.perform_drive(settings.DRIVE_STEP)
+	    else:
+		logging.debug("6: Turning LEFT")
+		self.MC.perform_drive(settings.DRIVE_STEP)
+		self.MC.perform_spin(calculate_quarter_spin_degree(
+		    from_dir=self.next_command['from_dir'],
+		    to_dir=self.next_command['to_dir']
+		))
+		self.MC.perform_drive(settings.DRIVE_STEP)
         elif self.next_command['command'] == "half_turn":
-            logging.error("Executing half turn command")
+            logging.error("7: Executing half turn command")
             self.MC.perform_spin(-90)
             self.MC.perform_drive(0.25, use_lane_detection=False)
             self.MC.perform_spin(-90)
@@ -165,12 +198,12 @@ class Car:
             # Update location table with new data
             if msg['ip'] != self.car['ip']:
                 self.location_table[msg['ip']] = msg
-                logging.error("Updated location table " + str(self.location_table))
+                #logging.error("Updated location table " + str(self.location_table))
 
         if msg_type == MessageTypes.TRAFFIC_LIGHT:
             # message is coming here
             i_id = sum(map(sum, msg['intersection']))
-            logging.error(msg)
+            #logging.error(msg)
             self.traffic_light_state[i_id] = msg
 
     def update_self_state(self):

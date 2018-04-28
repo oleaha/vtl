@@ -48,11 +48,11 @@ class Planner(threading.Thread):
             #logging.debug("Car in intersection at " + str(self.position) + " probability " + str(prob))
 
             if self.to_dir == Direction.SOUTH:
-                self._calculate_turn(prob, Direction.WEST, Direction.EAST, Direction.SOUTH)
+                self._calculate_turn(prob, Direction.EAST, Direction.WEST, Direction.SOUTH)
             elif self.to_dir == Direction.NORTH:
                 self._calculate_turn(prob, Direction.WEST, Direction.EAST, Direction.NORTH)
             elif self.to_dir == Direction.WEST:
-                self._calculate_turn(prob, Direction.NORTH, Direction.SOUTH, Direction.WEST)
+                self._calculate_turn(prob, Direction.SOUTH, Direction.NORTH, Direction.WEST)
             else:
                 self._calculate_turn(prob, Direction.NORTH, Direction.SOUTH, Direction.EAST)
         else:
@@ -70,6 +70,7 @@ class Planner(threading.Thread):
             self.drive_straight(straight)
 
     def quarter_turn(self, direction):
+	#logging.debug("!!! QUARTER TURN: Current to dir:" + str(self.to_dir) + " new to dir " +  str(direction))
         new_pos = self.LOC.update_car_pos_turn(self.to_dir, direction)
 
         if new_pos == self.position:
@@ -97,12 +98,12 @@ class Planner(threading.Thread):
         new_pos = self.LOC.update_car_pos(direction)
 
         if new_pos == self.position:
-            logging.debug("new pos is out-of-bounds, rejecting pos")
+            #logging.debug("new pos is out-of-bounds, rejecting pos")
             self.handle_out_of_bounds()
             self.half_turn()
             return
 
-        logging.debug("new pos is now " + str(new_pos))
+        #logging.debug("new pos is now " + str(new_pos))
 
         self.plan.put(
             {'command': 'straight', 'next_pos': new_pos, 'to_dir': direction,

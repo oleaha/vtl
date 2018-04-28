@@ -36,7 +36,7 @@ class ReceiveMulticast:
             logging.error("Could not create socket, error: " + str(msg))
 
     def listen(self):
-        logging.debug("Listening...")
+        #logging.debug("Listening...")
         return json.loads(self.socket.recvfrom(1024)[0])
 
     def close(self):

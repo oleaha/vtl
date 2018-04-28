@@ -95,27 +95,27 @@ class MotorControlV2:
                     average = numpy.average(measure)
                     #logging.info("AVERAGE OFFSET: " + str(round(average, 2)))
                     if average < settings.ACTUAL_CENTER:
-			if average < 290:
+			if average < 313:
 			    drive_left = drive_left * 0.85
-			    logging.debug("Adjusting offset by 15% on left")
-			elif average < 320:
+			    #logging.debug("Adjusting offset by 15% on left")
+			elif average < 343:
 			    drive_left = drive_left * 0.9
-			    logging.debug("Adjusting offset by 10% on left")
-			elif average < 330:
-			    logging.debug("Adjusting offset by %5 on left")
+			    #logging.debug("Adjusting offset by 10% on left")
+			elif average < 353:
+			    #logging.debug("Adjusting offset by %5 on left")
 			    drive_left = drive_left * 0.95
-			elif average < 355:
-			    logging.debug("Adjusting offset by 2% on left")
+			elif average < 378:
+			    #logging.debug("Adjusting offset by 2% on left")
 			    drive_left = drive_left * 0.98
                     elif average > settings.ACTUAL_CENTER:
-			if average > 400:
-			    logging.debug("Adjusting offset by 10% on right")
+			if average > 423:
+			    #logging.debug("Adjusting offset by 10% on right")
 			    drive_right = drive_right * 0.9
-			elif average > 390:
-			    logging.debug("Adjusting offset by 5% on right")
+			elif average > 413:
+			    #logging.debug("Adjusting offset by 5% on right")
 			    drive_right = drive_right * 0.95
-			elif average > 370:
-			    logging.debug("Adjusting offset by 2% on right")
+			elif average > 393:
+			    #logging.debug("Adjusting offset by 2% on right")
 			    drive_right = drive_right * 0.98
             #self.measurements.task_done()
 
