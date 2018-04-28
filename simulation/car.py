@@ -73,8 +73,8 @@ class Car:
     def init_simulation(self):
         # Thread logger
         logging.basicConfig(level=logging.DEBUG,
-                            format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s',
-                            filename='log_' + str(self.car['ip']) + '.log'
+                            format='[%(asctime)s %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s',
+                            filename='log_' + str(self.car['ip']) + '.log', datefmt="%Y-%m-%d %H:%M:%S"
                             )
         logging.debug("car.py started")
 
@@ -241,6 +241,6 @@ if len(sys.argv) > 1:
         traffic_light = True
     else:
         traffic_light = False
-    c = Car(str(sys.argv[1]), (5, 11), 'e', 'w', traffic_light)
+    c = Car(str(sys.argv[1]), (3, 11), 'e', 'w', traffic_light)
 else:
     c = Car('192.168.1.1', (3, 7), 'e', 'w', False)

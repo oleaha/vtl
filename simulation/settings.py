@@ -19,13 +19,13 @@ INTERSECTIONS = [
 
 # Small map
 MAP_SIZE_X = 12
-MAP_SIZE_Y = 12
+MAP_SIZE_Y = 8
 
-ROADS_X = [5, 6]
+ROADS_X = [3, 4]
 ROADS_Y = [5, 6]
 
 INTERSECTIONS = [
-    ((5, 5), (5, 6), (6, 5), (6, 6))
+    ((3, 5), (3, 6), (4, 5), (4, 6))
 ]
 
 
