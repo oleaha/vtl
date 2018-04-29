@@ -187,7 +187,8 @@ class Car:
     def is_next_pos_available(self):
         if len(self.location_table) > 0:
             for ip, location in self.location_table.iteritems():
-                if location['curr_pos'] == self.next_command['next_pos']:
+                #logging.error("Other car current pos: " + str(location['curr_pos']) + " My next pos: " + str(self.next_command['next_pos']))
+		if tuple(location['curr_pos']) == self.next_command['next_pos']:
                     logging.error("NEXT POS IS NOT AVAILABLE")
                     return False
         return True
