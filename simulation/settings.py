@@ -30,7 +30,7 @@ INTERSECTIONS = [
 
 
 
-PROBABILITIES = {'left': 0.35, 'right': 0.30}
+PROBABILITIES = {'left': 0.30, 'right': 0.60}
 
 QUARTER_TURN_DEGREES = 90
 HALF_TURN_DEGREES = 180
