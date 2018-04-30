@@ -44,7 +44,7 @@ class Car:
         self.next_command = None
         self.RUNNING = True
         self.use_traffic_light = use_traffic_light
-	self.statistics['wait_time'] = 0
+        self.statistics['wait_time'] = 0
 
         self.init_simulation()
 
@@ -60,7 +60,7 @@ class Car:
                     self.execute_command()
                     self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
                     #time.sleep(2)
-		    logging.info("---------")
+                    logging.info("---------")
         except KeyboardInterrupt:
             logging.info("STATISTICS: " + str(self.statistics))
             self.PLANNER.stop_thread()
@@ -115,25 +115,25 @@ class Car:
                 traffic_light = self.traffic_light_state[intersection_id]
 
                 if self.next_command['from_dir'] == Direction.NORTH:
-		    while True:
-			if self.traffic_light_state[intersection_id]['state'] == "0" or self.traffic_light_state[intersection_id]['state'] == "1":
-			    break
-			logging.error("Waiting from green light from north or south")
-			time.sleep(1)
+                    while True:
+                        if self.traffic_light_state[intersection_id]['state'] == "0" or self.traffic_light_state[intersection_id]['state'] == "1":
+                            break
+                        logging.error("Waiting from green light from north or south")
+                        time.sleep(1)
                 elif self.next_command['from_dir'] == Direction.SOUTH:
-		    while True:
-			if self.traffic_light_state[intersection_id]['state'] == "0" or self.traffic_light_state[intersection_id]['state'] == "1":
+                    while True:
+                        if self.traffic_light_state[intersection_id]['state'] == "0" or self.traffic_light_state[intersection_id]['state'] == "1":
                             break
                         logging.error("Waiting from green light from north or south")
                         time.sleep(1)
                 elif self.next_command['from_dir'] == Direction.EAST:
-		    while True:
+                    while True:
                         if self.traffic_light_state[intersection_id]['state'] == "2" or self.traffic_light_state[intersection_id]['state'] == "3":
                             break
                         logging.error("Waiting from green light from east or west")
                         time.sleep(1)
                 elif self.next_command['from_dir'] == Direction.WEST:
-		    while True:
+                    while True:
                         if self.traffic_light_state[intersection_id]['state'] == "2" or self.traffic_light_state[intersection_id]['state'] == "3":
                             break
                         logging.error("Waiting from green light from east or west")
@@ -147,42 +147,42 @@ class Car:
         elif self.next_command['command'] == "quarter_turn":
             logging.error("5: Executing quarter turn command")
             from_dir = self.next_command['from_dir']
-	    to_dir = self.next_command['to_dir']
-	    turn = ""
-	    if from_dir == Direction.WEST:
-		if to_dir == Direction.SOUTH:
-		    turn = "left"
-		else:
-		    turn = "right"
-	    if from_dir == Direction.SOUTH:
-		if to_dir == Direction.EAST:
-		    turn = "left"
-		else:
-		    turn = "right"
-	    if from_dir == Direction.EAST:
-		if to_dir == Direction.NORTH:
-		    turn = "left"
-		else:
-		    turn = "right"
-	    if from_dir == Direction.NORTH:
-		if to_dir == Direction.WEST:
-		    turn = "left"
-		else:
-		    turn = "right"
-	    if turn == "right":
-	    	self.MC.perform_spin(calculate_quarter_spin_degree(
+            to_dir = self.next_command['to_dir']
+            turn = ""
+            if from_dir == Direction.WEST:
+                if to_dir == Direction.SOUTH:
+                    turn = "left"
+                else:
+                    turn = "right"
+            if from_dir == Direction.SOUTH:
+                if to_dir == Direction.EAST:
+                    turn = "left"
+                else:
+                    turn = "right"
+            if from_dir == Direction.EAST:
+                if to_dir == Direction.NORTH:
+                    turn = "left"
+                else:
+                    turn = "right"
+            if from_dir == Direction.NORTH:
+                if to_dir == Direction.WEST:
+                    turn = "left"
+                else:
+                    turn = "right"
+            if turn == "right":
+                self.MC.perform_spin(calculate_quarter_spin_degree(
+                        from_dir=self.next_command['from_dir'],
+                        to_dir=self.next_command['to_dir']
+                    ))
+                self.MC.perform_drive(settings.DRIVE_STEP)
+            else:
+                logging.debug("6: Turning LEFT")
+                self.MC.perform_drive(settings.DRIVE_STEP)
+                self.MC.perform_spin(calculate_quarter_spin_degree(
                     from_dir=self.next_command['from_dir'],
                     to_dir=self.next_command['to_dir']
-            	))
-	        self.MC.perform_drive(settings.DRIVE_STEP)
-	    else:
-		logging.debug("6: Turning LEFT")
-		self.MC.perform_drive(settings.DRIVE_STEP)
-		self.MC.perform_spin(calculate_quarter_spin_degree(
-		    from_dir=self.next_command['from_dir'],
-		    to_dir=self.next_command['to_dir']
-		))
-		self.MC.perform_drive(settings.DRIVE_STEP)
+                ))
+                self.MC.perform_drive(settings.DRIVE_STEP)
         elif self.next_command['command'] == "half_turn":
             logging.error("7: Executing half turn command")
             self.MC.perform_spin(-90)
@@ -191,12 +191,11 @@ class Car:
             time.sleep(2)
         self.update_self_state()
 
-    # TODO: Not working
     def is_next_pos_available(self):
         if len(self.location_table) > 0:
             for ip, location in self.location_table.iteritems():
                 #logging.error("Other car current pos: " + str(location['curr_pos']) + " My next pos: " + str(self.next_command['next_pos']))
-		if tuple(location['curr_pos']) == self.next_command['next_pos']:
+                if tuple(location['curr_pos']) == self.next_command['next_pos']:
                     logging.error("NEXT POS IS NOT AVAILABLE")
                     return False
         return True

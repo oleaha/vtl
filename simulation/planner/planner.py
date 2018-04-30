@@ -70,7 +70,7 @@ class Planner(threading.Thread):
             self.drive_straight(straight)
 
     def quarter_turn(self, direction):
-	#logging.debug("!!! QUARTER TURN: Current to dir:" + str(self.to_dir) + " new to dir " +  str(direction))
+        #logging.debug("!!! QUARTER TURN: Current to dir:" + str(self.to_dir) + " new to dir " +  str(direction))
         new_pos = self.LOC.update_car_pos_turn(self.to_dir, direction)
 
         if new_pos == self.position:
