@@ -105,7 +105,9 @@ class Car:
         while not self.is_next_pos_available():
             logging.error("2: Next position is not available, waiting")
             time.sleep(0.5)
-
+        """
+        Start regular traffic light implementation
+        """
         if self.LOC.is_next_pos_in_intersection(self.next_command['next_pos']) and not self.LOC.is_next_pos_in_intersection(self.car['curr_pos']):
             logging.error("3: Next pos is intersection")
             intersection = self.LOC.get_intersection(self.next_command['next_pos'])
@@ -139,6 +141,9 @@ class Car:
                         logging.error("Waiting from green light from east or west")
                         time.sleep(1)
                 self.statistics['wait_time'] += 1
+        """
+        End regular traffic light implementation
+        """
 
         if self.next_command['command'] == "straight":
             logging.error("4: Executing straight command")
