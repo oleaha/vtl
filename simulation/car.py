@@ -4,8 +4,8 @@ import os
 sys.path.append(os.getcwd())
 
 from simulation.location.location import Location
-from simulation.piborg.motorControl import MotorControlV2
-#from simulation.piborg.motorControlMock import MotorControlV2
+#from simulation.piborg.motorControl import MotorControlV2
+from simulation.piborg.motorControlMock import MotorControlV2
 from simulation.planner.planner import Planner
 from simulation.network.send import Send, SendMulticast
 from simulation.network.receive import Receive, ReceiveMulticast
@@ -19,7 +19,8 @@ import Queue
 import time
 import threading
 import json
-
+import numpy
+import operator
 
 class Car:
 
@@ -55,8 +56,7 @@ class Car:
     def simulation_thread(self):
         try:
             while True:
-                # TODO: REGULAR TRAFFIC LIGHT!
-                if self.plan.qsize() > 5 and len(self.traffic_light_state) > 0:
+                if self.plan.qsize() > 5:
                     self.execute_command()
                     self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
                     #time.sleep(2)
@@ -80,7 +80,7 @@ class Car:
 
         # Initialize location module
         # TODO: Remember that only one car has this feature!
-        self.LOC = Location(self.car['curr_pos'], use_traffic_light=self.use_traffic_light)
+        self.LOC = Location(self.car['curr_pos'], use_traffic_light=False)
         # Initialize motor control module
         self.MC = MotorControlV2()
 
@@ -105,45 +105,11 @@ class Car:
         while not self.is_next_pos_available():
             logging.error("2: Next position is not available, waiting")
             time.sleep(0.5)
-        """
-        Start regular traffic light implementation
-        """
-        if self.LOC.is_next_pos_in_intersection(self.next_command['next_pos']) and not self.LOC.is_next_pos_in_intersection(self.car['curr_pos']):
-            logging.error("3: Next pos is intersection")
-            intersection = self.LOC.get_intersection(self.next_command['next_pos'])
-            intersection_id = sum(map(sum, intersection.get_pos()))
 
-            if intersection_id in self.traffic_light_state:
-                traffic_light = self.traffic_light_state[intersection_id]
-
-                if self.next_command['from_dir'] == Direction.NORTH:
-                    while True:
-                        if self.traffic_light_state[intersection_id]['state'] == "0" or self.traffic_light_state[intersection_id]['state'] == "1":
-                            break
-                        logging.error("Waiting from green light from north or south")
-                        time.sleep(1)
-                elif self.next_command['from_dir'] == Direction.SOUTH:
-                    while True:
-                        if self.traffic_light_state[intersection_id]['state'] == "0" or self.traffic_light_state[intersection_id]['state'] == "1":
-                            break
-                        logging.error("Waiting from green light from north or south")
-                        time.sleep(1)
-                elif self.next_command['from_dir'] == Direction.EAST:
-                    while True:
-                        if self.traffic_light_state[intersection_id]['state'] == "2" or self.traffic_light_state[intersection_id]['state'] == "3":
-                            break
-                        logging.error("Waiting from green light from east or west")
-                        time.sleep(1)
-                elif self.next_command['from_dir'] == Direction.WEST:
-                    while True:
-                        if self.traffic_light_state[intersection_id]['state'] == "2" or self.traffic_light_state[intersection_id]['state'] == "3":
-                            break
-                        logging.error("Waiting from green light from east or west")
-                        time.sleep(1)
-                self.statistics['wait_time'] += 1
-        """
-        End regular traffic light implementation
-        """
+        # TOOD: Check if in VTL area
+        if self.is_in_vtl_area(self.car['curr_pos']) and not self.is_in_vtl_area(self.car['prev_pos']):
+            logging.debug("Current position is in VTL area")
+            self.virtual_traffic_light()
 
         if self.next_command['command'] == "straight":
             logging.error("4: Executing straight command")
@@ -195,6 +161,36 @@ class Car:
             self.MC.perform_spin(-90)
             time.sleep(2)
         self.update_self_state()
+
+    def is_in_vtl_area(self, car_pos):
+        closest_intersection = self.LOC.closest_intersection()
+        for int_pos in closest_intersection.get_pos():
+            distance = numpy.linalg.norm(numpy.array(car_pos) - numpy.array(int_pos))
+            return distance <= 2
+
+    def virtual_traffic_light(self):
+        self.traffic_light_state['color'] = "yellow"
+        vtl_active = True
+
+        while vtl_active:
+
+            cars = {}
+
+            for ip, car in self.location_table.iteritems():
+                for pos in self.LOC.closest_intersection().get_pos():
+                    # TODO: Possibly wrong with array vs. tuple
+                    distance = numpy.linalg.norm(numpy.array(car['curr_pos']) - numpy.array(pos))
+                    if distance < 2 and ip not in cars:
+                        cars[ip] = distance
+            logging.debug("Other cars in VTL area: " + str(cars))
+
+            if len(cars) > 0:
+                sorted_cars = sorted(cars.items(), key=operator.itemgetter(1))
+                logging.debug("Sorted cars: " + str(sorted_cars))
+                return
+            else:
+                logging.debug("No cars within VTL area")
+                return
 
     def is_next_pos_available(self):
         if len(self.location_table) > 0:

@@ -107,7 +107,7 @@ class Location:
                 distance = numpy.linalg.norm(numpy.array(self.car) - numpy.array(pos))
                 if distance < closest_dist:
                     closest_dist = distance
-                    closest_intersection = pos
+                    closest_intersection = intersection
 
         if distance:
             return closest_dist
