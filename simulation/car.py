@@ -4,8 +4,8 @@ import os
 sys.path.append(os.getcwd())
 
 from simulation.location.location import Location
-#from simulation.piborg.motorControl import MotorControlV2
-from simulation.piborg.motorControlMock import MotorControlV2
+from simulation.piborg.motorControl import MotorControlV2
+#from simulation.piborg.motorControlMock import MotorControlV2
 from simulation.planner.planner import Planner
 from simulation.network.send import Send, SendMulticast
 from simulation.network.receive import Receive, ReceiveMulticast
