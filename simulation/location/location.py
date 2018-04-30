@@ -97,7 +97,7 @@ class Location:
         return self.map.get_map()[pos] == 3
 
     """ Find the closest intersection based on Euclidean Distance"""
-    def closest_intersection(self, distance=False):
+    def closest_intersection(self):
 
         closest_dist = 400
         closest_intersection = ()
@@ -108,7 +108,4 @@ class Location:
                 if distance < closest_dist:
                     closest_dist = distance
                     closest_intersection = intersection
-
-        if distance:
-            return closest_dist
         return closest_intersection

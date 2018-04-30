@@ -106,7 +106,6 @@ class Car:
             logging.error("2: Next position is not available, waiting")
             time.sleep(0.5)
 
-        # TOOD: Check if in VTL area
         if self.is_in_vtl_area(self.car['curr_pos']) and not self.is_in_vtl_area(self.car['prev_pos']):
             logging.debug("Current position is in VTL area")
             self.virtual_traffic_light()
@@ -164,6 +163,7 @@ class Car:
 
     def is_in_vtl_area(self, car_pos):
         closest_intersection = self.LOC.closest_intersection()
+
         for int_pos in closest_intersection.get_pos():
             distance = numpy.linalg.norm(numpy.array(car_pos) - numpy.array(int_pos))
             return distance <= 2
@@ -207,7 +207,7 @@ class Car:
             # Update location table with new data
             if msg['ip'] != self.car['ip']:
                 self.location_table[msg['ip']] = msg
-                #logging.error("Updated location table " + str(self.location_table))
+                logging.error("Updated location table " + str(self.location_table))
 
         if msg_type == MessageTypes.TRAFFIC_LIGHT:
             # message is coming here
