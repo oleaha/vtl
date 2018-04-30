@@ -115,20 +115,28 @@ class Car:
                 traffic_light = self.traffic_light_state[intersection_id]
 
                 if self.next_command['from_dir'] == Direction.NORTH:
-                    while self.traffic_light_state[intersection_id]['state'] != "0":
-                        logging.error("Waiting for green light from north")
-                        time.sleep(1)
+		    while True:
+			if self.traffic_light_state[intersection_id]['state'] == "0" or self.traffic_light_state[intersection_id]['state'] == "1":
+			    break
+			logging.error("Waiting from green light from north or south")
+			time.sleep(1)
                 elif self.next_command['from_dir'] == Direction.SOUTH:
-                    while self.traffic_light_state[intersection_id]['state'] != "1":
-                        logging.error("Waiting for green light from south")
+		    while True:
+			if self.traffic_light_state[intersection_id]['state'] == "0" or self.traffic_light_state[intersection_id]['state'] == "1":
+                            break
+                        logging.error("Waiting from green light from north or south")
                         time.sleep(1)
                 elif self.next_command['from_dir'] == Direction.EAST:
-                    while self.traffic_light_state[intersection_id]['state'] != "2":
-                        logging.error("Waiting for green light from east")
+		    while True:
+                        if self.traffic_light_state[intersection_id]['state'] == "2" or self.traffic_light_state[intersection_id]['state'] == "3":
+                            break
+                        logging.error("Waiting from green light from east or west")
                         time.sleep(1)
                 elif self.next_command['from_dir'] == Direction.WEST:
-                    while self.traffic_light_state[intersection_id]['state'] != "3":
-                        logging.error("Waiting for green light from west")
+		    while True:
+                        if self.traffic_light_state[intersection_id]['state'] == "2" or self.traffic_light_state[intersection_id]['state'] == "3":
+                            break
+                        logging.error("Waiting from green light from east or west")
                         time.sleep(1)
                 self.statistics['wait_time'] += 1
 
