@@ -206,7 +206,6 @@ class Car:
 
                 if sorted_cars[0][1] > 1:
                     logging.debug("No cars are at the intersection yet, skipping")
-                    time.sleep(1)
                     return
 
                 # Step 5
@@ -226,7 +225,10 @@ class Car:
                         logging.debug("Car is closest to the intersection")
                         if len(sorted_cars) > 1:
                             # TODO: Send GRR to all cars in cars
+                            send = SendMulticast(broadcast=True)
+                            send.send(MessageTypes.VTL, "Hello")
                             logging.debug("Sending GRR to all cars")
+                            send.close()
                             time.sleep(1)
                         if len(sorted_cars) == 1:
                             logging.debug("Car gets the green light")
@@ -261,6 +263,9 @@ class Car:
             i_id = sum(map(sum, msg['intersection']))
             #logging.error(msg)
             self.traffic_light_state[i_id] = msg
+
+        if msg_type == MessageTypes.VTL:
+            logging.debug("VTL MESSAGE: " + str(msg))
 
     def update_self_state(self):
         self.car['prev_pos'] = self.car['curr_pos']
