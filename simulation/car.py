@@ -106,7 +106,9 @@ class Car:
             logging.error("2: Next position is not available, waiting")
             time.sleep(0.5)
 
-        if self.is_in_vtl_area(self.car['curr_pos']) and not self.LOC.in_intersection(self.car['prev_pos']):
+        if self.is_in_vtl_area(self.car['curr_pos']) \
+                and not self.LOC.in_intersection(self.car['prev_pos']) \
+                and not self.LOC.in_intersection(self.car['curr_pos']):
             logging.debug("Current position is in VTL area")
             self.virtual_traffic_light()
 
