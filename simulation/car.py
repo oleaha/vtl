@@ -173,18 +173,20 @@ class Car:
         vtl_active = True
         leader = False
 
-        # Wait to see if location table
-        time.sleep(5)
-
         while vtl_active:
 
             cars = {}
 
             for ip, car in self.location_table.iteritems():
+                closest = 4
                 for pos in self.LOC.closest_intersection().get_pos():
                     mhd = abs(car['curr_pos'][0] - pos[0]) + abs(car['curr_pos'][1] - pos[1])
-                    if mhd < 3 and ip not in cars:
-                        cars[ip] = mhd
+                    if mhd < closest and mhd < 3:
+                        closest = mhd
+
+                if ip not in cars:
+                    cars[ip] = closest
+
             logging.debug("Other cars in VTL area: " + str(cars))
 
             if len(cars) > 0:
