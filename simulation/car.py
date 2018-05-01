@@ -108,7 +108,6 @@ class Car:
 
         if self.is_in_vtl_area(self.car['curr_pos']) and self.LOC.in_intersection(self.next_command['next_pos']) and not self.LOC.in_intersection(self.car['curr_pos']):
             logging.debug("Current position is in VTL area " + str(self.car['curr_pos']))
-            logging.debug("Location table: " + str(self.location_table))
             self.virtual_traffic_light()
 
         if self.next_command['command'] == "straight":
@@ -173,6 +172,9 @@ class Car:
         self.traffic_light_state['color'] = "yellow"
         vtl_active = True
         leader = False
+
+        # Wait to see if location table
+        time.sleep(5)
 
         while vtl_active:
 
