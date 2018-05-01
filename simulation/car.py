@@ -58,7 +58,15 @@ class Car:
             while True:
                 if self.plan.qsize() > 5:
                     self.execute_command()
-                    self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
+
+                    if len(self.location_table) > 0:
+                        cars = []
+                        for ip, car in self.location_table:
+                            cars.append(car['curr_pos'])
+                        cars.append(self.car['curr_pos'])
+                        self.LOC.map.print_map(cars, self.car['ip'])
+                    else:
+                        self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
                     #time.sleep(2)
                     logging.info("---------")
         except KeyboardInterrupt:
