@@ -61,7 +61,7 @@ class Car:
 
                     if len(self.location_table) > 0:
                         cars = []
-                        for ip, car in self.location_table:
+                        for ip, car in self.location_table.iteritems():
                             cars.append(car['curr_pos'])
                         cars.append(self.car['curr_pos'])
                         self.LOC.map.print_map(cars, self.car['ip'])
