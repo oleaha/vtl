@@ -171,6 +171,7 @@ class Car:
     def virtual_traffic_light(self):
         self.traffic_light_state['color'] = "yellow"
         vtl_active = True
+        leader = False
 
         while vtl_active:
 
@@ -178,16 +179,46 @@ class Car:
 
             for ip, car in self.location_table.iteritems():
                 for pos in self.LOC.closest_intersection().get_pos():
-                    # TODO: Possibly wrong with array vs. tuple
-                    distance = numpy.linalg.norm(numpy.array(car['curr_pos']) - numpy.array(pos))
-                    if distance < 2 and ip not in cars:
-                        cars[ip] = distance
+                    mhd = abs(car['curr_pos'][0] - pos[0]) + abs(car['curr_pos'][1] - pos[1])
+                    if mhd < 3 and ip not in cars:
+                        cars[ip] = mhd
             logging.debug("Other cars in VTL area: " + str(cars))
 
             if len(cars) > 0:
                 sorted_cars = sorted(cars.items(), key=operator.itemgetter(1))
                 logging.debug("Sorted cars: " + str(sorted_cars))
-                return
+
+                if sorted_cars[0][1] > 1:
+                    logging.debug("No cars are at the intersection yet, skipping")
+                    time.sleep(1)
+                    continue
+
+                # Step 5
+                if self.is_next_pos_available():
+                    logging.debug("Car is leader in this road")
+                    leader = True
+                else:
+                    logging.debug("Car is follower in this road")
+                    self.traffic_light_state['color'] = "red"
+                    # TODO: Missing T_f timer....
+                    time.sleep(1)
+                    continue
+
+                # Step 6
+                if leader:
+                    if sorted_cars[0][0] == self.car['ip']:
+                        logging.debug("Car is closest to the intersection")
+                        if len(sorted_cars) > 1:
+                            # TODO: Send GRR to all cars in cars
+                            logging.debug("Sending GRR to all cars")
+                            time.sleep(1)
+                        if len(sorted_cars) == 1:
+                            logging.debug("Car gets the green light")
+                            self.traffic_light_state['color'] = "green"
+                    else:
+                        logging.debug("Car is not closest to the intersection")
+                        self.traffic_light_state['color'] = "red"
+                        time.sleep(1)
             else:
                 logging.debug("No cars within VTL area")
                 return
@@ -207,7 +238,7 @@ class Car:
             # Update location table with new data
             if msg['ip'] != self.car['ip']:
                 self.location_table[msg['ip']] = msg
-                logging.error("Updated location table " + str(self.location_table))
+                #logging.error("Updated location table " + str(self.location_table))
 
         if msg_type == MessageTypes.TRAFFIC_LIGHT:
             # message is coming here
