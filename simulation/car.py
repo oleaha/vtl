@@ -180,7 +180,8 @@ class Car:
             distance = numpy.linalg.norm(numpy.array(car_pos) - numpy.array(int_pos))
             return distance <= 2
 
-    def _manhattan_distance(self, pos_one, pos_two):
+    @staticmethod
+    def _manhattan_distance(pos_one, pos_two):
         return abs(pos_one[0] - pos_two[0]) + abs(pos_one[1] - pos_two[1])
 
     def virtual_traffic_light(self):
@@ -214,8 +215,6 @@ class Car:
                     closest = mhd
 
             cars[self.car['ip']] = closest
-
-
 
             logging.debug("Step 1:  Cars in VTL area: " + str(cars))
             for ip, car in self.location_table.iteritems():
@@ -262,6 +261,7 @@ class Car:
                         logging.debug("Step 4: Car is not closest to the intersection")
                         self.traffic_light_state['color'] = "red"
                         time.sleep(1)
+                        continue
             else:
                 logging.debug("Step 5: No cars within VTL area")
                 return
@@ -269,7 +269,6 @@ class Car:
     def is_next_pos_available(self):
         if len(self.location_table) > 0:
             for ip, location in self.location_table.iteritems():
-                #logging.error("Other car current pos: " + str(location['curr_pos']) + " My next pos: " + str(self.next_command['next_pos']))
                 if tuple(location['curr_pos']) == self.next_command['next_pos']:
                     logging.error("NEXT POS IS NOT AVAILABLE")
                     return False
@@ -291,7 +290,7 @@ class Car:
 
         if msg_type == MessageTypes.VTL:
             logging.debug("VTL MESSAGE: " + str(msg))
-            if msg['code'] == 'GRR':
+            if msg['code'] == 'GRR' and msg['origin'] != self.car['ip']:
                 # Send ACK
                 send = SendMulticast(broadcast=True)
                 send.send(MessageTypes.VTL, {'code': 'ACK', 'receiver': msg['origin'], 'origin': self.car['ip']})
