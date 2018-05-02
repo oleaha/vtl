@@ -179,6 +179,9 @@ class Car:
             distance = numpy.linalg.norm(numpy.array(car_pos) - numpy.array(int_pos))
             return distance <= 2
 
+    def _manhattan_distance(self, pos_one, pos_two):
+        return abs(pos_one[0] - pos_two[0]) + abs(pos_one[1] - pos_two[1])
+
     def virtual_traffic_light(self):
         self.traffic_light_state['color'] = "yellow"
         vtl_active = True
@@ -188,19 +191,34 @@ class Car:
 
             cars = {}
 
+            # Other cars
             for ip, car in self.location_table.iteritems():
                 closest = 4
                 for pos in self.LOC.closest_intersection().get_pos():
-                    mhd = abs(car['curr_pos'][0] - pos[0]) + abs(car['curr_pos'][1] - pos[1])
-                    if mhd < closest and mhd < 3:
+                    mhd = self._manhattan_distance(car['curr_pos'], pos)
+                    # mhd = abs(car['curr_pos'][0] - pos[0]) + abs(car['curr_pos'][1] - pos[1])
+                    # Find the closest intersection point, that is less than three away from the intersection and
+                    # remove cars that are IN the intersection. I think
+                    if mhd < closest and mhd <= 3 and mhd != 0:
                         closest = mhd
 
                 if ip not in cars:
                     cars[ip] = closest
 
-            logging.debug("Step 1: Other cars in VTL area: " + str(cars))
+            # Current car
+            closest = 4
+            for pos in self.LOC.closest_intersection().get_pos()
+                mhd = self._manhattan_distance(self.car['curr_pos'], pos)
+                if mhd < closest:
+                    closest = mhd
+
+            cars[self.car['ip']] = closest
+
+
+
+            logging.debug("Step 1:  Cars in VTL area: " + str(cars))
             for ip, car in self.location_table.iteritems():
-                logging.debug("Step 1: Other car position: " + str(car['curr_pos']))
+                logging.debug("Step 1: Car " + str(ip) + " position: " + str(car['curr_pos']))
 
             if len(cars) > 0:
                 sorted_cars = sorted(cars.items(), key=operator.itemgetter(1))
