@@ -198,11 +198,11 @@ class Car:
                 if ip not in cars:
                     cars[ip] = closest
 
-            logging.debug("Other cars in VTL area: " + str(cars))
+            logging.debug("Step 1: Other cars in VTL area: " + str(cars))
 
             if len(cars) > 0:
                 sorted_cars = sorted(cars.items(), key=operator.itemgetter(1))
-                logging.debug("Sorted cars: " + str(sorted_cars))
+                logging.debug("Step 2: Sorted cars: " + str(sorted_cars))
 
                 if sorted_cars[0][1] > 1:
                     logging.debug("No cars are at the intersection yet, skipping")
@@ -210,10 +210,10 @@ class Car:
 
                 # Step 5
                 if self.is_next_pos_available():
-                    logging.debug("Car is leader in this road")
+                    logging.debug("Step 3: Car is leader in this road")
                     leader = True
                 else:
-                    logging.debug("Car is follower in this road")
+                    logging.debug("Step 3: Car is follower in this road")
                     self.traffic_light_state['color'] = "red"
                     # TODO: Missing T_f timer....
                     time.sleep(1)
@@ -222,7 +222,7 @@ class Car:
                 # Step 6
                 if leader:
                     if sorted_cars[0][0] == self.car['ip']:
-                        logging.debug("Car is closest to the intersection")
+                        logging.debug("Step 4: Car is closest to the intersection")
                         if len(sorted_cars) > 1:
                             # TODO: Send GRR to all cars in cars
                             send = SendMulticast(broadcast=True)
@@ -234,11 +234,11 @@ class Car:
                             logging.debug("Car gets the green light")
                             self.traffic_light_state['color'] = "green"
                     else:
-                        logging.debug("Car is not closest to the intersection")
+                        logging.debug("Step 4: Car is not closest to the intersection")
                         self.traffic_light_state['color'] = "red"
                         time.sleep(1)
             else:
-                logging.debug("No cars within VTL area")
+                logging.debug("Step 5: No cars within VTL area")
                 return
 
     def is_next_pos_available(self):
