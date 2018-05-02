@@ -199,6 +199,8 @@ class Car:
                     cars[ip] = closest
 
             logging.debug("Step 1: Other cars in VTL area: " + str(cars))
+            for ip, car in self.location_table.iteritems():
+                logging.debug("Step 1: Other car position: " + car['curr_pos'])
 
             if len(cars) > 0:
                 sorted_cars = sorted(cars.items(), key=operator.itemgetter(1))
