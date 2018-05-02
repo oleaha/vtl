@@ -246,7 +246,7 @@ class Car:
                         if len(sorted_cars) > 1:
                             # TODO: Send GRR to all cars in cars
                             send = SendMulticast(broadcast=True)
-                            send.send(MessageTypes.VTL, "Hello")
+                            send.send(MessageTypes.VTL, {'hello': 'all cars'})
                             logging.debug("Sending GRR to all cars")
                             send.close()
                             time.sleep(1)
