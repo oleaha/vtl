@@ -207,7 +207,7 @@ class Car:
 
             # Current car
             closest = 4
-            for pos in self.LOC.closest_intersection().get_pos()
+            for pos in self.LOC.closest_intersection().get_pos():
                 mhd = self._manhattan_distance(self.car['curr_pos'], pos)
                 if mhd < closest:
                     closest = mhd
