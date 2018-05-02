@@ -52,6 +52,7 @@ class Car:
         self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
 
         self.simulation_thread()
+        self.traffic_light_state['ack'] = []
 
     def simulation_thread(self):
         try:
@@ -244,12 +245,15 @@ class Car:
                     if sorted_cars[0][0] == self.car['ip']:
                         logging.debug("Step 4: Car is closest to the intersection")
                         if len(sorted_cars) > 1:
-                            # TODO: Send GRR to all cars in cars
                             send = SendMulticast(broadcast=True)
-                            send.send(MessageTypes.VTL, {'hello': 'all cars'})
+                            send.send(MessageTypes.VTL, {'code': 'GRR', 'origin': self.car['ip']})
                             logging.debug("Sending GRR to all cars")
                             send.close()
-                            time.sleep(1)
+                            while len(self.traffic_light_state['ack']) < len(cars) - 1:
+                                logging.debug("Waiting for ACK confirmation")
+                                time.sleep(1)
+                            self.traffic_light_state['color'] = "green"
+                            return
                         if len(sorted_cars) == 1:
                             logging.debug("Car gets the green light")
                             self.traffic_light_state['color'] = "green"
@@ -286,6 +290,16 @@ class Car:
 
         if msg_type == MessageTypes.VTL:
             logging.debug("VTL MESSAGE: " + str(msg))
+            if msg['code'] == 'GRR':
+                # Send ACK
+                send = SendMulticast(broadcast=True)
+                send.send(MessageTypes.VTL, {'code': 'ACK', 'receiver': msg['ip'], 'origin': self.car['ip']})
+                send.close()
+                logging.debug("Sending ACK message")
+            elif msg['code'] == "ACK":
+                if msg['receiver'] == self.car['ip']:
+                    self.traffic_light_state['ack'].append(msg['origin'])
+
 
     def update_self_state(self):
         self.car['prev_pos'] = self.car['curr_pos']
