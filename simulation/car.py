@@ -35,6 +35,7 @@ class Car:
     beacon_thread = None
     receive_thread = None
     statistics = {}
+    vtl_ack = []
 
     def __init__(self, ip, pos, from_dir, to_dir, use_traffic_light=False):
         self.car['ip'] = ip
@@ -52,7 +53,6 @@ class Car:
         self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
 
         self.simulation_thread()
-        self.traffic_light_state['ack'] = []
 
     def simulation_thread(self):
         try:
@@ -249,10 +249,11 @@ class Car:
                             send.send(MessageTypes.VTL, {'code': 'GRR', 'origin': self.car['ip']})
                             logging.debug("Sending GRR to all cars")
                             send.close()
-                            while len(self.traffic_light_state['ack']) < len(cars) - 1:
+                            while len(self.vtl_ack) < len(cars) - 1:
                                 logging.debug("Waiting for ACK confirmation")
                                 time.sleep(1)
                             self.traffic_light_state['color'] = "green"
+                            self.vtl_ack = []
                             return
                         if len(sorted_cars) == 1:
                             logging.debug("Car gets the green light")
@@ -298,7 +299,7 @@ class Car:
                 logging.debug("Sending ACK message")
             elif msg['code'] == "ACK":
                 if msg['receiver'] == self.car['ip']:
-                    self.traffic_light_state['ack'].append(msg['origin'])
+                    self.vtl_ack.append(msg['origin'])
 
 
     def update_self_state(self):
