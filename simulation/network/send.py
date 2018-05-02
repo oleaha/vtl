@@ -29,7 +29,7 @@ class Send:
             msg['message_type'] = msg_type
             self.socket.sendto(json.dumps(msg), (self.ip, self.port))
         except socket.error:
-            logging.error("Could not send message")
+            logging.error("Could not send message " + str(socket.error.message))
 
     def close(self):
         self.socket.close()
