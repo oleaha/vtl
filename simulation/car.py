@@ -289,14 +289,17 @@ class Car:
             self.traffic_light_state[i_id] = msg
 
         if msg_type == MessageTypes.VTL:
-            logging.debug("VTL MESSAGE: " + str(msg))
-            if msg['code'] == 'GRR' and msg['origin'] != self.car['ip']:
+            # Only accpet GRR messages if they are not from yourself and you are in a VTL area
+            # TODO: Send intersection ID!
+            if msg['code'] == 'GRR' and msg['origin'] != self.car['ip'] and self.is_in_vtl_area(self.car['curr_pos']):
                 # Send ACK
+                logging.debug("Received VTL GRR message: " + str(msg))
                 send = SendMulticast(broadcast=True)
                 send.send(MessageTypes.VTL, {'code': 'ACK', 'receiver': msg['origin'], 'origin': self.car['ip']})
                 send.close()
                 logging.debug("Sending ACK message")
             elif msg['code'] == "ACK":
+                logging.debug("Received VTL ACK message: " + str(msg))
                 if msg['receiver'] == self.car['ip']:
                     self.vtl_ack.append(msg['origin'])
 
