@@ -293,7 +293,7 @@ class Car:
             if msg['code'] == 'GRR':
                 # Send ACK
                 send = SendMulticast(broadcast=True)
-                send.send(MessageTypes.VTL, {'code': 'ACK', 'receiver': msg['ip'], 'origin': self.car['ip']})
+                send.send(MessageTypes.VTL, {'code': 'ACK', 'receiver': msg['origin'], 'origin': self.car['ip']})
                 send.close()
                 logging.debug("Sending ACK message")
             elif msg['code'] == "ACK":
