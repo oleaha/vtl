@@ -21,6 +21,7 @@ import threading
 import json
 import numpy
 import operator
+from random import randint
 
 class Car:
 
@@ -245,11 +246,11 @@ class Car:
                         logging.debug("Step 4: Car is closest to the intersection")
                         if len(sorted_cars) > 1:
                             send = SendMulticast(broadcast=True)
-                            send.send(MessageTypes.VTL, {'code': 'GRR', 'origin': self.car['ip']})
+                            send.send(MessageTypes.VTL, {'code': 'GRR', 'origin': self.car['ip'], 'checksum': randint(0, 255)})
                             logging.debug("Sending GRR to all cars")
                             send.close()
                             while len(self.vtl_ack) < len(cars) - 1:
-                                logging.debug("Waiting for ACK confirmation")
+                                logging.debug("Waiting for ACK confirmation. Current acks: " + str(len(self.vtl_ack)) + " should be: " + str(len(cars) - 1))
                                 time.sleep(1)
                             self.traffic_light_state['color'] = "green"
                             self.vtl_ack = []
@@ -289,20 +290,19 @@ class Car:
             self.traffic_light_state[i_id] = msg
 
         if msg_type == MessageTypes.VTL:
-            # Only accpet GRR messages if they are not from yourself and you are in a VTL area
+            # Only accpet GRR messages if they are not from yourself
             # TODO: Send intersection ID!
-            if msg['code'] == 'GRR' and msg['origin'] != self.car['ip'] and self.is_in_vtl_area(self.car['curr_pos']):
+            if msg['code'] == 'GRR' and msg['origin'] != self.car['ip']:
                 # Send ACK
                 logging.debug("Received VTL GRR message: " + str(msg))
                 send = SendMulticast(broadcast=True)
-                send.send(MessageTypes.VTL, {'code': 'ACK', 'receiver': msg['origin'], 'origin': self.car['ip']})
+                send.send(MessageTypes.VTL, {'code': 'ACK', 'receiver': msg['origin'], 'origin': self.car['ip'], 'checksum': randint(0, 255)})
                 send.close()
                 logging.debug("Sending ACK message")
             elif msg['code'] == "ACK":
                 logging.debug("Received VTL ACK message: " + str(msg))
                 if msg['receiver'] == self.car['ip']:
                     self.vtl_ack.append(msg['origin'])
-
 
     def update_self_state(self):
         self.car['prev_pos'] = self.car['curr_pos']
