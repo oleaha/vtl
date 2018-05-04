@@ -37,6 +37,7 @@ class Car:
     receive_thread = None
     statistics = {}
     vtl_ack = []
+    checksum = 0
 
     def __init__(self, ip, pos, from_dir, to_dir, use_traffic_light=False):
         self.car['ip'] = ip
@@ -246,7 +247,8 @@ class Car:
                         logging.debug("Step 4: Car is closest to the intersection")
                         if len(sorted_cars) > 1:
                             send = SendMulticast(broadcast=True)
-                            grr_message = {'code': 'GRR', 'origin': self.car['ip'], 'checksum': randint(0, 255)}
+                            self.checksum = randint(0, 255)
+                            grr_message = {'code': 'GRR', 'origin': self.car['ip'], 'checksum': self.checksum}
                             send.send(MessageTypes.VTL, grr_message)
                             logging.debug("Sending GRR to all cars " + str(grr_message))
                             send.close()
@@ -302,7 +304,8 @@ class Car:
                 logging.debug("Sending ACK message")
             elif msg['code'] == "ACK":
                 logging.debug("Received VTL ACK message: " + str(msg))
-                if msg['receiver'] == self.car['ip']:
+                # Only append if receiver is current car and if it is a reply to current VTL (via checksum)
+                if msg['receiver'] == self.car['ip'] and self.checksum == msg['checksum']:
                     self.vtl_ack.append(msg['origin'])
 
     def update_self_state(self):
