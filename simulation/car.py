@@ -73,7 +73,7 @@ class Car:
     def init_simulation(self):
         # Thread logger
         logging.basicConfig(level=logging.DEBUG,
-                            format='[%(asctime)s %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s',
+                            format='[%(asctime)s ; %(threadName)s - %(funcName)21s():%(lineno)s ] ; %(message)s',
                             filename='log_' + str(self.car['ip']) + '.log', datefmt="%Y-%m-%d %H:%M:%S"
                             )
         logging.debug("car.py started")
