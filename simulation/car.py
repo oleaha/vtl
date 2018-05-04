@@ -246,8 +246,9 @@ class Car:
                         logging.debug("Step 4: Car is closest to the intersection")
                         if len(sorted_cars) > 1:
                             send = SendMulticast(broadcast=True)
-                            send.send(MessageTypes.VTL, {'code': 'GRR', 'origin': self.car['ip'], 'checksum': randint(0, 255)})
-                            logging.debug("Sending GRR to all cars")
+                            grr_message = {'code': 'GRR', 'origin': self.car['ip'], 'checksum': randint(0, 255)}
+                            send.send(MessageTypes.VTL, grr_message)
+                            logging.debug("Sending GRR to all cars " + str(grr_message))
                             send.close()
                             while len(self.vtl_ack) < len(cars) - 1:
                                 logging.debug("Waiting for ACK confirmation. Current acks: " + str(len(self.vtl_ack)) + " should be: " + str(len(cars) - 1))
@@ -296,7 +297,7 @@ class Car:
                 # Send ACK
                 logging.debug("Received VTL GRR message: " + str(msg))
                 send = SendMulticast(broadcast=True)
-                send.send(MessageTypes.VTL, {'code': 'ACK', 'receiver': msg['origin'], 'origin': self.car['ip'], 'checksum': randint(0, 255)})
+                send.send(MessageTypes.VTL, {'code': 'ACK', 'receiver': msg['origin'], 'origin': self.car['ip'], 'checksum': msg['checksum']})
                 send.close()
                 logging.debug("Sending ACK message")
             elif msg['code'] == "ACK":
