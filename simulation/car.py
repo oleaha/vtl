@@ -59,7 +59,7 @@ class Car:
     def simulation_thread(self):
         try:
             while True:
-                if self.plan.qsize() > 5:
+                if self.plan.qsize() > 5 and len(self.location_table) > 1:
                     self.execute_command()
                     # TODO: This needs to be tested more
                     """
