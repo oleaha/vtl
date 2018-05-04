@@ -45,6 +45,9 @@ class Car:
         self.RUNNING = True
         self.use_traffic_light = use_traffic_light
         self.statistics['wait_time'] = 0
+        self.statistics['number_of_steps'] = 0
+        self.statistics['number_of_crossings'] = 0
+        self.statistics['total_simulation_time'] = 0
 
         self.init_simulation()
 
@@ -53,7 +56,9 @@ class Car:
         self.simulation_thread()
 
     def simulation_thread(self):
+        start = 0
         try:
+            start = time.time()
             while True:
                 # TODO: REGULAR TRAFFIC LIGHT!
                 if self.plan.qsize() > 5 and len(self.traffic_light_state) > 0:
@@ -62,7 +67,11 @@ class Car:
                     #time.sleep(2)
                     logging.info("---------")
         except KeyboardInterrupt:
+            self.statistics['total_simulation_time'] = time.time() - start
+            self.statistics['average_speed'] = ((self.statistics['number_of_steps'] * settings.DRIVE_STEP) / 100) / self.statistics['total_simulation_time']
+
             logging.info("STATISTICS: " + str(self.statistics))
+
             self.PLANNER.stop_thread()
             self.MC.stop_motors()
             self.MC.stop_lane_detection()
@@ -121,32 +130,37 @@ class Car:
                         if self.traffic_light_state[intersection_id]['state'] == "0" or self.traffic_light_state[intersection_id]['state'] == "1":
                             break
                         logging.error("Waiting from green light from north or south")
+                        self.statistics['wait_time'] += 1
                         time.sleep(1)
                 elif self.next_command['from_dir'] == Direction.SOUTH:
                     while True:
                         if self.traffic_light_state[intersection_id]['state'] == "0" or self.traffic_light_state[intersection_id]['state'] == "1":
                             break
                         logging.error("Waiting from green light from north or south")
+                        self.statistics['wait_time'] += 1
                         time.sleep(1)
                 elif self.next_command['from_dir'] == Direction.EAST:
                     while True:
                         if self.traffic_light_state[intersection_id]['state'] == "2" or self.traffic_light_state[intersection_id]['state'] == "3":
                             break
                         logging.error("Waiting from green light from east or west")
+                        self.statistics['wait_time'] += 1
                         time.sleep(1)
                 elif self.next_command['from_dir'] == Direction.WEST:
                     while True:
                         if self.traffic_light_state[intersection_id]['state'] == "2" or self.traffic_light_state[intersection_id]['state'] == "3":
                             break
                         logging.error("Waiting from green light from east or west")
+                        self.statistics['wait_time'] += 1
                         time.sleep(1)
-                self.statistics['wait_time'] += 1
+                self.statistics['number_of_crossings'] += 1
         """
         End regular traffic light implementation
         """
 
         if self.next_command['command'] == "straight":
             logging.error("4: Executing straight command")
+            self.statistics['number_of_steps'] += 1
             self.MC.perform_drive(settings.DRIVE_STEP)
 
         elif self.next_command['command'] == "quarter_turn":
@@ -180,6 +194,7 @@ class Car:
                         to_dir=self.next_command['to_dir']
                     ))
                 self.MC.perform_drive(settings.DRIVE_STEP)
+                self.statistics['number_of_steps'] += 1
             else:
                 logging.debug("6: Turning LEFT")
                 self.MC.perform_drive(settings.DRIVE_STEP)
@@ -188,6 +203,8 @@ class Car:
                     to_dir=self.next_command['to_dir']
                 ))
                 self.MC.perform_drive(settings.DRIVE_STEP)
+                self.statistics['number_of_steps'] += 1
+
         elif self.next_command['command'] == "half_turn":
             logging.error("7: Executing half turn command")
             self.MC.perform_spin(-90)
