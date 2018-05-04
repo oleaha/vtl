@@ -65,6 +65,7 @@ class Car:
                     self.execute_command()
                     self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
                     #time.sleep(2)
+                    logging.info(str(self.statistics))
                     logging.info("---------")
         except KeyboardInterrupt:
             self.statistics['total_simulation_time'] = time.time() - start
