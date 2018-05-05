@@ -267,7 +267,7 @@ class Car:
                             send.send(MessageTypes.VTL, grr_message)
                             logging.debug("Sending GRR to all cars " + str(grr_message))
                             send.close()
-                            while len(self.vtl_ack.qsize()) < len(cars) - 1:
+                            while self.vtl_ack.qsize() < len(cars) - 1:
                                 logging.debug("Waiting for ACK confirmation. Current acks: " + str(self.vtl_ack.qsize()) + " should be: " + str(len(cars) - 1))
                                 time.sleep(1)
                                 self.statistics['wait_time'] += 1
