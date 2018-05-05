@@ -37,7 +37,7 @@ class Car:
     beacon_thread = None
     receive_thread = None
     statistics = {}
-    vtl_ack = []
+    vtl_ack = Queue.Queue()
     checksum = 0
 
     def __init__(self, ip, pos, from_dir, to_dir, use_traffic_light=False):
@@ -267,12 +267,13 @@ class Car:
                             send.send(MessageTypes.VTL, grr_message)
                             logging.debug("Sending GRR to all cars " + str(grr_message))
                             send.close()
-                            while len(self.vtl_ack) < len(cars) - 1:
-                                logging.debug("Waiting for ACK confirmation. Current acks: " + str(len(self.vtl_ack)) + " should be: " + str(len(cars) - 1))
+                            while len(self.vtl_ack.qsize()) < len(cars) - 1:
+                                logging.debug("Waiting for ACK confirmation. Current acks: " + str(self.vtl_ack.qsize()) + " should be: " + str(len(cars) - 1))
                                 time.sleep(1)
                                 self.statistics['wait_time'] += 1
                             self.traffic_light_state['color'] = "green"
-                            self.vtl_ack = []
+                            with self.vtl_ack.mutex:
+                                self.vtl_ack.queue.clear()
                             return
                         if len(sorted_cars) == 1:
                             logging.debug("Car gets the green light")
@@ -323,7 +324,7 @@ class Car:
                 logging.debug("Received VTL ACK message: " + str(msg))
                 # Only append if receiver is current car and if it is a reply to current VTL (via checksum)
                 if msg['receiver'] == self.car['ip'] and self.checksum == msg['checksum']:
-                    self.vtl_ack.append(msg['origin'])
+                    self.vtl_ack.put(msg['origin'])
 
     def update_self_state(self):
         self.car['prev_pos'] = self.car['curr_pos']
