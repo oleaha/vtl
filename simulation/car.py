@@ -65,7 +65,7 @@ class Car:
         try:
             start = time.time()
             while True:
-                if self.plan.qsize() > 5 and len(self.location_table) > 1:
+                if self.plan.qsize() > 5 and len(self.location_table) > 2:
                     self.execute_command()
                     # TODO: This needs to be tested more
                     """
