@@ -21,6 +21,7 @@ import threading
 import json
 import numpy
 import operator
+import time
 from random import randint
 
 class Car:
@@ -49,6 +50,9 @@ class Car:
         self.RUNNING = True
         self.use_traffic_light = use_traffic_light
         self.statistics['wait_time'] = 0
+        self.statistics['number_of_steps'] = 0
+        self.statistics['number_of_crossings'] = 0
+        self.statistics['total_simulation_time'] = 0
 
         self.init_simulation()
 
@@ -57,7 +61,9 @@ class Car:
         self.simulation_thread()
 
     def simulation_thread(self):
+        start = 0
         try:
+            start = time.time()
             while True:
                 if self.plan.qsize() > 5 and len(self.location_table) > 1:
                     self.execute_command()
@@ -74,8 +80,12 @@ class Car:
                     """
                     self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
                     #time.sleep(2)
+                    self.statistics['total_simulation_time'] = time.time() - start
+                    logging.info(str(self.statistics))
                     logging.info("---------")
         except KeyboardInterrupt:
+            self.statistics['total_simulation_time'] = time.time() - start
+            self.statistics['average_speed'] = ((self.statistics['number_of_steps']*settings.DRIVE_STEP) / self.statistics['total_simulation_time'])
             logging.info("STATISTICS: " + str(self.statistics))
             self.PLANNER.stop_thread()
             self.MC.stop_motors()
@@ -123,10 +133,12 @@ class Car:
         if self.is_in_vtl_area(self.car['curr_pos']) and self.LOC.in_intersection(self.next_command['next_pos']) and not self.LOC.in_intersection(self.car['curr_pos']):
             logging.debug("Current position is in VTL area " + str(self.car['curr_pos']))
             self.virtual_traffic_light()
+            self.statistics['number_of_crossings'] += 1
 
         if self.next_command['command'] == "straight":
             logging.error("4: Executing straight command")
             self.MC.perform_drive(settings.DRIVE_STEP)
+            self.statistics['number_of_steps'] += 1
 
         elif self.next_command['command'] == "quarter_turn":
             logging.error("5: Executing quarter turn command")
@@ -159,6 +171,7 @@ class Car:
                         to_dir=self.next_command['to_dir']
                     ))
                 self.MC.perform_drive(settings.DRIVE_STEP)
+                self.statistics['number_of_steps'] += 1
             else:
                 logging.debug("6: Turning LEFT")
                 self.MC.perform_drive(settings.DRIVE_STEP)
@@ -167,11 +180,13 @@ class Car:
                     to_dir=self.next_command['to_dir']
                 ))
                 self.MC.perform_drive(settings.DRIVE_STEP)
+                self.statistics['number_of_steps'] += 2
         elif self.next_command['command'] == "half_turn":
             logging.error("7: Executing half turn command")
             self.MC.perform_spin(-90)
             self.MC.perform_drive(0.25, use_lane_detection=False)
             self.MC.perform_spin(-90)
+            self.statistics['number_of_steps'] += 1
             time.sleep(2)
         self.update_self_state()
 
@@ -255,6 +270,7 @@ class Car:
                             while len(self.vtl_ack) < len(cars) - 1:
                                 logging.debug("Waiting for ACK confirmation. Current acks: " + str(len(self.vtl_ack)) + " should be: " + str(len(cars) - 1))
                                 time.sleep(1)
+                                self.statistics['wait_time'] += 1
                             self.traffic_light_state['color'] = "green"
                             self.vtl_ack = []
                             return
@@ -265,6 +281,7 @@ class Car:
                         logging.debug("Step 4: Car is not closest to the intersection")
                         self.traffic_light_state['color'] = "red"
                         time.sleep(1)
+                        self.statistics['wait_time'] += 1
                         continue
             else:
                 logging.debug("Step 5: No cars within VTL area")
