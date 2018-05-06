@@ -223,7 +223,7 @@ class Car:
                         if mhd_current < closest and mhd_current <= 3 and mhd_current != 0:
                             closest = mhd_current
 
-                if ip not in cars:
+                if ip not in cars and closest <= 3:
                     cars[ip] = closest
 
             # Current car
@@ -321,7 +321,7 @@ class Car:
                 send.send(MessageTypes.VTL, {'code': 'ACK', 'receiver': msg['origin'], 'origin': self.car['ip'], 'checksum': msg['checksum']})
                 send.close()
                 logging.debug("Sending ACK message")
-            elif msg['code'] == "ACK":
+            if msg['code'] == "ACK":
                 # Only append if receiver is current car and if it is a reply to current VTL (via checksum)
                 if msg['receiver'] == self.car['ip'] and self.checksum == msg['checksum']:
                     logging.debug("Received VTL ACK message: " + str(msg))
