@@ -316,7 +316,7 @@ class Car:
             if msg['code'] == 'GRR' and msg['origin'] != self.car['ip']:
                 # Send ACK
                 logging.debug("Received VTL GRR message: " + str(msg))
-                time.sleep(randint(10)/10.0)
+                time.sleep(randint(0, 10)/10.0)
                 send = SendMulticast(broadcast=True)
                 send.send(MessageTypes.VTL, {'code': 'ACK', 'receiver': msg['origin'], 'origin': self.car['ip'], 'checksum': msg['checksum']})
                 send.close()
