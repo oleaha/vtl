@@ -214,12 +214,13 @@ class Car:
             for ip, car in self.location_table.iteritems():
                 closest = 4
                 for pos in self.LOC.closest_intersection().get_pos():
-                    mhd = self._manhattan_distance(car['curr_pos'], pos)
-                    # mhd = abs(car['curr_pos'][0] - pos[0]) + abs(car['curr_pos'][1] - pos[1])
-                    # Find the closest intersection point, that is less than three away from the intersection and
-                    # remove cars that are IN the intersection. I think
-                    if mhd < closest and mhd <= 3 and mhd != 0:
-                        closest = mhd
+                    mhd_current = self._manhattan_distance(car['curr_pos'], pos)
+                    mhd_previous = self._manhattan_distance(car['prev_pos'], pos)
+
+                    if mhd_current < mhd_previous:
+                        # Car is approaching intersection
+                        if mhd_current < closest and mhd_current <= 3 and mhd_current != 0:
+                            closest = mhd_current
 
                 if ip not in cars:
                     cars[ip] = closest
@@ -234,8 +235,6 @@ class Car:
             cars[self.car['ip']] = closest
 
             logging.debug("Step 1:  Cars in VTL area: " + str(cars))
-            for ip, car in self.location_table.iteritems():
-                logging.debug("Step 1: Car " + str(ip) + " position: " + str(car['curr_pos']))
 
             if len(cars) > 0:
                 sorted_cars = sorted(cars.items(), key=operator.itemgetter(1))
