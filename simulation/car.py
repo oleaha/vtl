@@ -211,6 +211,7 @@ class Car:
             cars = {}
 
             # Other cars
+            time.sleep(1)  # Receive updates from all cars
             for ip, car in self.location_table.iteritems():
                 closest = 4
                 for pos in self.LOC.closest_intersection().get_pos():
