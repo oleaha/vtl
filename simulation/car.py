@@ -53,6 +53,7 @@ class Car:
         self.statistics['number_of_steps'] = 0
         self.statistics['number_of_crossings'] = 0
         self.statistics['total_simulation_time'] = 0
+        self.statistics['queue_time'] = 0
 
         self.init_simulation()
 
@@ -252,32 +253,40 @@ class Car:
                 else:
                     logging.debug("Step 3: Car is follower in this road")
                     self.traffic_light_state['color'] = "red"
-                    # TODO: Missing T_f timer....
+                    self.statistics['queue_time'] += 1
                     time.sleep(1)
                     continue
 
                 # Step 6
                 if leader:
                     if sorted_cars[0][0] == self.car['ip']:
+
                         logging.debug("Step 4: Car is closest to the intersection")
+
                         if len(sorted_cars) > 1:
                             send = SendMulticast(broadcast=True)
                             self.checksum = randint(0, 255)
                             grr_message = {'code': 'GRR', 'origin': self.car['ip'], 'checksum': self.checksum}
+
                             send.send(MessageTypes.VTL, grr_message)
                             logging.debug("Sending GRR to all cars " + str(grr_message))
                             send.close()
+
                             while self.vtl_ack.qsize() < len(cars) - 1:
                                 logging.debug("Waiting for ACK confirmation. Current acks: " + str(self.vtl_ack.qsize()) + " should be: " + str(len(cars) - 1))
                                 time.sleep(1)
                                 self.statistics['wait_time'] += 1
+
                             self.traffic_light_state['color'] = "green"
+
                             with self.vtl_ack.mutex:
                                 self.vtl_ack.queue.clear()
                             return
+
                         if len(sorted_cars) == 1:
                             logging.debug("Car gets the green light")
                             self.traffic_light_state['color'] = "green"
+                            return
                     else:
                         logging.debug("Step 4: Car is not closest to the intersection")
                         self.traffic_light_state['color'] = "red"
@@ -316,11 +325,13 @@ class Car:
             if msg['code'] == 'GRR' and msg['origin'] != self.car['ip']:
                 # Send ACK
                 logging.debug("Received VTL GRR message: " + str(msg))
+
                 time.sleep(randint(0, 10)/10.0)
                 send = SendMulticast(broadcast=True)
                 send.send(MessageTypes.VTL, {'code': 'ACK', 'receiver': msg['origin'], 'origin': self.car['ip'], 'checksum': msg['checksum']})
                 send.close()
-                logging.debug("Sending ACK message")
+                logging.debug("Sending ACK message. Checksum: " + str(msg['checksum']))
+
             if msg['code'] == "ACK":
                 # Only append if receiver is current car and if it is a reply to current VTL (via checksum)
                 if msg['receiver'] == self.car['ip'] and self.checksum == msg['checksum']:
