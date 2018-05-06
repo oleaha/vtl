@@ -316,14 +316,15 @@ class Car:
             if msg['code'] == 'GRR' and msg['origin'] != self.car['ip']:
                 # Send ACK
                 logging.debug("Received VTL GRR message: " + str(msg))
+                time.sleep(randint(10)/10.0)
                 send = SendMulticast(broadcast=True)
                 send.send(MessageTypes.VTL, {'code': 'ACK', 'receiver': msg['origin'], 'origin': self.car['ip'], 'checksum': msg['checksum']})
                 send.close()
                 logging.debug("Sending ACK message")
             elif msg['code'] == "ACK":
-                logging.debug("Received VTL ACK message: " + str(msg))
                 # Only append if receiver is current car and if it is a reply to current VTL (via checksum)
                 if msg['receiver'] == self.car['ip'] and self.checksum == msg['checksum']:
+                    logging.debug("Received VTL ACK message: " + str(msg))
                     self.vtl_ack.put(msg['origin'])
 
     def update_self_state(self):
