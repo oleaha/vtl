@@ -48,6 +48,7 @@ class Car:
         self.statistics['number_of_steps'] = 0
         self.statistics['number_of_crossings'] = 0
         self.statistics['total_simulation_time'] = 0
+        self.statistics['queue_time'] = 0.0
 
         self.init_simulation()
 
@@ -114,6 +115,9 @@ class Car:
 
         while not self.is_next_pos_available():
             logging.error("2: Next position is not available, waiting")
+            if self.LOC.is_next_pos_in_intersection(
+                    self.next_command['next_pos']) and not self.LOC.is_next_pos_in_intersection(self.car['curr_pos']):
+                self.statistics['queue_time'] += 0.5
             time.sleep(0.5)
         """
         Start regular traffic light implementation
