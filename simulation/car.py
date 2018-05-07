@@ -66,11 +66,12 @@ class Car:
                     self.execute_command()
                     self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
                     #time.sleep(2)
+                    self.statistics['total_simulation_time'] = time.time() - start
                     logging.info(str(self.statistics))
                     logging.info("---------")
         except KeyboardInterrupt:
             self.statistics['total_simulation_time'] = time.time() - start
-            self.statistics['average_speed'] = ((self.statistics['number_of_steps'] * settings.DRIVE_STEP) / 100) / self.statistics['total_simulation_time']
+            self.statistics['average_speed'] = (self.statistics['number_of_steps'] * settings.DRIVE_STEP) / self.statistics['total_simulation_time']
 
             logging.info("STATISTICS: " + str(self.statistics))
 
@@ -114,11 +115,11 @@ class Car:
         logging.error("1: Next command to execute: " + str(self.next_command))
 
         while not self.is_next_pos_available():
-            logging.error("2: Next position is not available, waiting")
-            if self.LOC.is_next_pos_in_intersection(
-                    self.next_command['next_pos']) and not self.LOC.is_next_pos_in_intersection(self.car['curr_pos']):
+            if self.LOC.closest_intersection(True) <= 2:
                 self.statistics['queue_time'] += 0.5
+            logging.error("2: Next position is not available, waiting")
             time.sleep(0.5)
+
         """
         Start regular traffic light implementation
         """
