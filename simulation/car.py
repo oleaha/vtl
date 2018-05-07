@@ -115,6 +115,7 @@ class Car:
         logging.error("1: Next command to execute: " + str(self.next_command))
 
         while not self.is_next_pos_available():
+            logging.debug("Distance to intersection: " + str(self.LOC.closest_intersection(True)))
             if self.LOC.closest_intersection(True) <= 2:
                 self.statistics['queue_time'] += 0.5
             logging.error("2: Next position is not available, waiting")

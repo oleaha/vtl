@@ -104,7 +104,8 @@ class Location:
 
         for intersection in self.map.get_intersections():
             for pos in intersection.get_pos():
-                distance = numpy.linalg.norm(numpy.array(self.car) - numpy.array(pos))
+                distance = abs(self.car[0] - pos[0]) + abs(self.car[1] - pos[1])
+                #distance = numpy.linalg.norm(numpy.array(self.car) - numpy.array(pos))
                 if distance < closest_dist:
                     closest_dist = distance
                     closest_intersection = pos
