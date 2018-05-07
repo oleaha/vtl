@@ -97,14 +97,14 @@ class Location:
         return self.map.get_map()[pos] == 3
 
     """ Find the closest intersection based on Euclidean Distance"""
-    def closest_intersection(self, distance=False):
+    def closest_intersection(self, car, distance=False):
 
         closest_dist = 400
         closest_intersection = ()
 
         for intersection in self.map.get_intersections():
             for pos in intersection.get_pos():
-                distance = abs(self.car[0] - pos[0]) + abs(self.car[1] - pos[1])
+                distance = abs(car[0] - pos[0]) + abs(car[1] - pos[1])
                 #distance = numpy.linalg.norm(numpy.array(self.car) - numpy.array(pos))
                 if distance < closest_dist:
                     closest_dist = distance
