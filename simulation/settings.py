@@ -19,15 +19,12 @@ INTERSECTIONS = [
 
 # Small map
 MAP_SIZE_X = 12
-MAP_SIZE_Y = 8
-
-ROADS_X = [3, 4]
-ROADS_Y = [5, 6]
-
+MAP_SIZE_Y = 10
+ROADS_X = [4, 5]
+ROADS_Y = [3, 4, 7, 8]
 INTERSECTIONS = [
-    ((3, 5), (3, 6), (4, 5), (4, 6))
-]
-
+    ((4, 3), (4, 4), (5, 3), (5, 4)),
+    ((4, 7), (4, 8), (5, 7), (5, 8))]
 
 
 PROBABILITIES = {'left': 0.30, 'right': 0.60}
