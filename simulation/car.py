@@ -7,8 +7,8 @@ from simulation.location.location import Location
 from simulation.piborg.motorControl import MotorControlV2
 #from simulation.piborg.motorControlMock import MotorControlV2
 from simulation.planner.planner import Planner
-from simulation.network.send import Send, SendMulticast
-from simulation.network.receive import Receive, ReceiveMulticast
+from simulation.network.send import Send
+from simulation.network.receive import Receive
 import settings
 from simulation.utils.direction import Direction
 from simulation.utils.message_types import MessageTypes
@@ -16,9 +16,7 @@ from simulation.utils.utils import calculate_quarter_spin_degree
 
 import logging
 import Queue
-import time
 import threading
-import json
 import numpy
 import operator
 import time
@@ -68,19 +66,7 @@ class Car:
             while True:
                 if self.plan.qsize() > 5 and len(self.location_table) == 3:
                     self.execute_command()
-                    # TODO: This needs to be tested more
-                    """
-                    if len(self.location_table) > 0:
-                        cars = []
-                        for ip, car in self.location_table.iteritems():
-                            cars.append(car['curr_pos'])
-                        cars.append(self.car['curr_pos'])
-                        self.LOC.map.print_map(cars, self.car['ip'])
-                    else:
-                        self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
-                    """
                     self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
-                    #time.sleep(2)
                     self.statistics['total_simulation_time'] = time.time() - start
                     logging.info(str(self.statistics))
                     logging.info("---------")
@@ -104,7 +90,6 @@ class Car:
         logging.debug("car.py started")
 
         # Initialize location module
-        # TODO: Remember that only one car has this feature!
         self.LOC = Location(self.car['curr_pos'], use_traffic_light=False)
         # Initialize motor control module
         self.MC = MotorControlV2()
@@ -204,15 +189,12 @@ class Car:
 
     def virtual_traffic_light(self):
         self.traffic_light_state['color'] = "yellow"
-        vtl_active = True
         leader = False
 
-        while vtl_active:
-
+        while True:
             cars = {}
-
-            # Other cars
-            time.sleep(1)  # Receive updates from all cars
+            # Find all cars within VTL area of intersection
+            time.sleep(1)  # Make sure that location table is updated
             for ip, car in self.location_table.iteritems():
                 closest = 4
                 for pos in self.LOC.closest_intersection().get_pos():
@@ -227,7 +209,7 @@ class Car:
                 if ip not in cars and closest <= 3:
                     cars[ip] = closest
 
-            # Current car
+            # Add the current car to the set of cars
             closest = 4
             for pos in self.LOC.closest_intersection().get_pos():
                 mhd = self._manhattan_distance(self.car['curr_pos'], pos)
@@ -260,14 +242,12 @@ class Car:
                 # Step 6
                 if leader:
                     if sorted_cars[0][0] == self.car['ip']:
-
                         logging.debug("Step 4: Car is closest to the intersection")
 
                         if len(sorted_cars) > 1:
-                            send = SendMulticast(broadcast=True)
+                            send = Send(broadcast=True)
                             self.checksum = randint(0, 255)
                             grr_message = {'code': 'GRR', 'origin': self.car['ip'], 'checksum': self.checksum}
-
                             send.send(MessageTypes.VTL, grr_message)
                             logging.debug("Sending GRR to all cars " + str(grr_message))
                             send.close()
@@ -307,27 +287,24 @@ class Car:
 
     def message_handler(self, msg_type, msg):
 
+        # Update location table
         if msg_type == MessageTypes.BEACON:
-            # Update location table with new data
             if msg['ip'] != self.car['ip']:
                 self.location_table[msg['ip']] = msg
-                #logging.error("Updated location table " + str(self.location_table))
 
+        # Regular traffic light messages
         if msg_type == MessageTypes.TRAFFIC_LIGHT:
-            # message is coming here
             i_id = sum(map(sum, msg['intersection']))
-            #logging.error(msg)
             self.traffic_light_state[i_id] = msg
 
+        # Virtual traffic light messages
         if msg_type == MessageTypes.VTL:
-            # Only accpet GRR messages if they are not from yourself
-            # TODO: Send intersection ID!
             if msg['code'] == 'GRR' and msg['origin'] != self.car['ip']:
                 # Send ACK
                 logging.debug("Received VTL GRR message: " + str(msg))
 
                 time.sleep(randint(0, 10)/10.0)
-                send = SendMulticast(broadcast=True)
+                send = Send(broadcast=True)
                 send.send(MessageTypes.VTL, {'code': 'ACK', 'receiver': msg['origin'], 'origin': self.car['ip'], 'checksum': msg['checksum']})
                 send.close()
                 logging.debug("Sending ACK message. Checksum: " + str(msg['checksum']))
@@ -348,7 +325,7 @@ class Car:
         """
         Sends a beacon broadcast message every with car info every x seconds.
         """
-        send = SendMulticast(broadcast=True)
+        send = Send(broadcast=True)
         while self.RUNNING:
             send.send(MessageTypes.BEACON, self.car)
             time.sleep(settings.BROADCAST_STEP)
@@ -360,7 +337,7 @@ class Car:
         Listens for broadcast messages on the network. Update location table if sender is not the same as receiver
         :return:
         """
-        receive = ReceiveMulticast(self.car['ip'])
+        receive = Receive(self.car['ip'])
         while self.RUNNING:
             msg = receive.listen()
             self.message_handler(msg['message_type'], msg)

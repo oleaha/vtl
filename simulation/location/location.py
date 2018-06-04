@@ -37,8 +37,6 @@ class Location:
     def update_car_pos_turn(self, to_dir, new_to_dir):
         next_pos = ()
 
-        #logging.debug("car is turning from (going)" + str(to_dir) + " to (new going)" + str(new_to_dir))
-
         if to_dir == Direction.NORTH:
             if new_to_dir == Direction.WEST:
                 next_pos = (self.car[0] - 1, self.car[1] - 1)
@@ -53,7 +51,6 @@ class Location:
                 next_pos = (self.car[0] + 1, self.car[1] + 1)
             elif new_to_dir == Direction.NORTH:
                 next_pos = (self.car[0], self.car[1] + 1)
-                #logging.debug("temp new pos is " + str(next_pos))
         elif to_dir == Direction.WEST:
             if new_to_dir == Direction.NORTH:
                 next_pos = (self.car[0] - 1, self.car[1])
@@ -69,14 +66,11 @@ class Location:
             elif new_to_dir == Direction.WEST:
                 next_pos = (self.car[0] - 1, self.car[1])
 
-        #logging.debug("update_car_pos_turn: next pos: " + str(next_pos))
         self.car = next_pos
         return self.car
 
     def check_out_of_bounds(self, pos):
-        #logging.debug("Check if pos is OOB: " + str(pos))
         if pos[0] < 0 or pos[0] > settings.MAP_SIZE_Y - 1 or pos[1] < 0 or pos[1] > settings.MAP_SIZE_X - 1:
-            #logging.debug("Pos is OOB")
             return True
         return self.map.get_map()[pos] == 0
 

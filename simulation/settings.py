@@ -10,7 +10,8 @@ ROADS_X = [4, 5]
 ROADS_Y = [3, 4, 7, 8]
 INTERSECTIONS = [
     ((4, 3), (4, 4), (5, 3), (5, 4)),
-    ((4, 7), (4, 8), (5, 7), (5, 8))]
+    ((4, 7), (4, 8), (5, 7), (5, 8))
+]
 
 
 """
@@ -39,7 +40,7 @@ https://www.sans.org/security-resources/sec560/netcat_cheat_sheet_v1.pdf
 
 # Network settings
 # We are using the broadcast option for UDP so this address needs to be a "certified" broadcast address
-BROADCAST_IP = "127.255.255.255"
+BROADCAST_IP = "192.168.1.255"
 BROADCAST_PORT = 5005
 BROADCAST_STEP = 0.5  # Send beacons every 1 second
 # Multicast

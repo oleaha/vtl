@@ -3,6 +3,7 @@ import numpy
 from intersection import Intersection
 import copy
 
+
 class Map:
 
     map = []
