@@ -20,7 +20,6 @@ class MotorControlV2:
         self.TB = ThunderBorg.ThunderBorg()
         self.TB.Init()
 
-        #self.measurements = Queue.LifoQueue()
         self.measurements = Queue()
         logging.debug("Starting LaneDetection Thread")
         self.LD = LaneDetectionMP(self.measurements)
@@ -40,7 +39,7 @@ class MotorControlV2:
             sys.exit()
 
         self.TB.SetCommsFailsafe(False)
-        self.timeForwardOneMeter = 3.15
+        self.timeForwardOneMeter = 3.0
 
         self.timeSpinThreeSixty = 2.37
         self.voltageIn = 12.0
@@ -57,7 +56,7 @@ class MotorControlV2:
         time.sleep(num_seconds)
         self.TB.SetMotor1(0)
         self.TB.SetMotor2(0)
-        time.sleep(0.3)
+        time.sleep(0.8)
 
     def perform_spin(self, angle):
         if angle < 0.0:
@@ -80,13 +79,10 @@ class MotorControlV2:
             current_centres = self.measurements.get()
 
             if len(current_centres) > 0:
-                # Remove all 0 values to reduce noise
-                # TODO: This cannot be done!
                 current_centres = [x for x in current_centres if x > 0]
                 if len(current_centres) > 0:
                     avg_centre = numpy.average(current_centres)
                     logging.info("Current average center value: " + str(round(avg_centre, 2)))
-
                     if avg_centre > 300 and avg_centre < settings.ACTUAL_CENTER:
                         drive_left *= 0.98
                     elif avg_centre <= 300:
@@ -106,8 +102,33 @@ class MotorControlV2:
             drive_left = 1.0
             drive_right = 1.0
 
-        drive_left, drive_right = self.calculate_correction(drive_left, drive_right)
-        num_seconds = meters * self.timeForwardOneMeter  # TODO: Should time be longer if reduced power?
+        if use_lane_detection and self.measurements.qsize() > 0:
+            measure = 0
+            while self.measurements.qsize() > 0:
+                measure = self.measurements.get()
+
+            if len(measure) > 0:
+                measure = [x for x in measure if x > 0]
+                if len(measure) > 0:
+                    average = numpy.average(measure)
+                    if average < settings.ACTUAL_CENTER:
+                        if average < 313:
+                            drive_left = drive_left * 0.85
+                        elif average < 343:
+                            drive_left = drive_left * 0.9
+                        elif average < 353:
+                            drive_left = drive_left * 0.95
+                        elif average < 378:
+                            drive_left = drive_left * 0.98
+                    elif average > settings.ACTUAL_CENTER:
+                        if average > 423:
+                            drive_right = drive_right * 0.9
+                        elif average > 413:
+                            drive_right = drive_right * 0.95
+                        elif average > 393:
+                            drive_right = drive_right * 0.98
+
+        num_seconds = meters * self.timeForwardOneMeter
         self.perform_move(drive_left, drive_right, num_seconds)
 
     def stop_motors(self):

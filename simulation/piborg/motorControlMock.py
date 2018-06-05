@@ -14,8 +14,11 @@ class MotorControlV2(object):
     def perform_spin(self, angle):
         return self.perform_move()
 
-    def perform_drive(self, meters):
+    def perform_drive(self, meters, use_lane_detection=True):
         return self.perform_move()
 
     def stop_motors(self):
         return
+
+    def stop_lane_detection(self):
+        pass

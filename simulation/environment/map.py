@@ -3,18 +3,20 @@ import numpy
 from intersection import Intersection
 import copy
 
+
 class Map:
 
     map = []
     intersections = []
 
-    def __init__(self):
+    def __init__(self, use_traffic_light):
+        self.use_traffic_light = use_traffic_light
         self.create_intersections()
         self.create_map()
 
     def create_intersections(self):
         for intersection in settings.INTERSECTIONS:
-            self.intersections.append(Intersection(intersection))
+            self.intersections.append(Intersection(intersection, self.use_traffic_light))
 
     def create_map(self):
         self.map = numpy.array([[0 for j in range(settings.MAP_SIZE_X)] for i in range(settings.MAP_SIZE_Y)])
@@ -46,7 +48,8 @@ class Map:
     def print_map(self, car_pos, car_ip):
         # Make a copy of the map
         tmp_map = copy.copy(self.map)
-        tmp_map[car_pos] = 8
+        for car in car_pos:
+            tmp_map[car] = 8
         filename = "car_" + car_ip + ".txt"
 
         for row in tmp_map:

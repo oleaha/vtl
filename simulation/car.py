@@ -12,13 +12,15 @@ from simulation.network.receive import Receive
 import settings
 from simulation.utils.direction import Direction
 from simulation.utils.message_types import MessageTypes
+from simulation.utils.utils import calculate_quarter_spin_degree
 
 import logging
 import Queue
-import time
 import threading
-import json
-
+import numpy
+import operator
+import time
+from random import randint
 
 class Car:
 
@@ -28,8 +30,15 @@ class Car:
 
     car = {'ip': '', 'curr_pos': (), 'prev_pos': (), 'from_dir': '', 'to_dir': '', 'speed': 0}
     location_table = {}  # Table of all active robots
+    traffic_light_state = {}
+    plan = None
+    beacon_thread = None
+    receive_thread = None
+    statistics = {}
+    vtl_ack = Queue.Queue()
+    checksum = 0
 
-    def __init__(self, ip, pos, from_dir, to_dir):
+    def __init__(self, ip, pos, from_dir, to_dir, use_traffic_light=False):
         self.car['ip'] = ip
         self.car['curr_pos'] = pos
         self.car['prev_pos'] = pos
@@ -37,15 +46,51 @@ class Car:
         self.car['from_dir'] = from_dir
         self.next_command = None
         self.RUNNING = True
+        self.use_traffic_light = use_traffic_light
+        self.statistics['wait_time'] = 0
+        self.statistics['number_of_steps'] = 0
+        self.statistics['number_of_crossings'] = 0
+        self.statistics['total_simulation_time'] = 0
+        self.statistics['queue_time'] = 0
 
+        self.init_simulation()
+
+        self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
+
+        self.simulation_thread()
+
+    def simulation_thread(self):
+        start = 0
+        try:
+            start = time.time()
+            while True:
+                if self.plan.qsize() > 5 and len(self.location_table) == 3:
+                    self.execute_command()
+                    self.LOC.map.print_map([self.car['curr_pos']], self.car['ip'])
+                    self.statistics['total_simulation_time'] = time.time() - start
+                    logging.info(str(self.statistics))
+                    logging.info("---------")
+        except KeyboardInterrupt:
+            self.statistics['total_simulation_time'] = time.time() - start
+            self.statistics['average_speed'] = ((self.statistics['number_of_steps']*settings.DRIVE_STEP) / self.statistics['total_simulation_time'])
+            logging.info("STATISTICS: " + str(self.statistics))
+            self.PLANNER.stop_thread()
+            self.MC.stop_motors()
+            self.MC.stop_lane_detection()
+            self.RUNNING = False
+            logging.debug("All systems stopped")
+            sys.exit()
+
+    def init_simulation(self):
         # Thread logger
-        logging.basicConfig(level=logging.INFO,
-                            format='[%(relativeCreated)6d %(threadName)s - %(funcName)21s():%(lineno)s ] : %(message)s',
+        logging.basicConfig(level=logging.DEBUG,
+                            format='[%(asctime)s ; %(threadName)s - %(funcName)21s():%(lineno)s ] ; %(message)s',
+                            filename='log_' + str(self.car['ip']) + '.log', datefmt="%Y-%m-%d %H:%M:%S"
                             )
         logging.debug("car.py started")
 
         # Initialize location module
-        self.LOC = Location(self.car['curr_pos'])
+        self.LOC = Location(self.car['curr_pos'], use_traffic_light=False)
         # Initialize motor control module
         self.MC = MotorControlV2()
 
@@ -55,46 +100,220 @@ class Car:
         self.PLANNER = Planner(1, "Planner", self.car['curr_pos'], self.car['to_dir'], self.plan)
         self.PLANNER.start()
 
-        self.beacon_thread = threading.Thread(target=self.send_beacon, name="Send Beacon")  # TODO: No sure if this is the best solution
+        self.beacon_thread = threading.Thread(target=self._send_beacon,
+                                              name="Send Beacon")  # TODO: No sure if this is the best solution
         self.beacon_thread.start()
 
         # Initialize network receive message module
-        self.receive_thread = threading.Thread(target=self.receive, name="Receive")
+        self.receive_thread = threading.Thread(target=self._receive, name="Receive")
         self.receive_thread.start()
-
-        self.LOC.map.print_map(self.car['curr_pos'], self.car['ip'])
-
-        try:
-            while True:
-                if self.plan.qsize() > 5:
-                    self.execute_command()
-                    self.LOC.map.print_map(self.car['curr_pos'], self.car['ip'])
-                    logging.info("---------")
-        except KeyboardInterrupt:
-            self.PLANNER.stop_thread()
-            self.MC.stop_motors()
-            self.MC.stop_lane_detection()
-            self.RUNNING = False
-            logging.debug("All systems stopped")
-            sys.exit()
 
     def execute_command(self):
         self.next_command = self.plan.get()
-        logging.error("Next command to execute: " + str(self.next_command))
+        logging.error("1: Next command to execute: " + str(self.next_command))
+
+        while not self.is_next_pos_available():
+            logging.error("2: Next position is not available, waiting")
+            time.sleep(0.5)
+
+        if self.is_in_vtl_area(self.car['curr_pos']) and self.LOC.in_intersection(self.next_command['next_pos']) and not self.LOC.in_intersection(self.car['curr_pos']):
+            logging.debug("Current position is in VTL area " + str(self.car['curr_pos']))
+            self.virtual_traffic_light()
+            self.statistics['number_of_crossings'] += 1
 
         if self.next_command['command'] == "straight":
-            logging.error("Executing straight command")
-            self.MC.perform_drive(0.2)
+            logging.error("4: Executing straight command")
+            self.MC.perform_drive(settings.DRIVE_STEP)
+            self.statistics['number_of_steps'] += 1
+
         elif self.next_command['command'] == "quarter_turn":
-            logging.error("Executing quarter turn command")
-            self.MC.perform_spin(self.calculate_quarter_spin_degree())
-            # TODO: When turning left, go one step up, then 90 degree turn
+            logging.error("5: Executing quarter turn command")
+            from_dir = self.next_command['from_dir']
+            to_dir = self.next_command['to_dir']
+            turn = ""
+            if from_dir == Direction.WEST:
+                if to_dir == Direction.SOUTH:
+                    turn = "left"
+                else:
+                    turn = "right"
+            if from_dir == Direction.SOUTH:
+                if to_dir == Direction.EAST:
+                    turn = "left"
+                else:
+                    turn = "right"
+            if from_dir == Direction.EAST:
+                if to_dir == Direction.NORTH:
+                    turn = "left"
+                else:
+                    turn = "right"
+            if from_dir == Direction.NORTH:
+                if to_dir == Direction.WEST:
+                    turn = "left"
+                else:
+                    turn = "right"
+            if turn == "right":
+                self.MC.perform_spin(calculate_quarter_spin_degree(
+                        from_dir=self.next_command['from_dir'],
+                        to_dir=self.next_command['to_dir']
+                    ))
+                self.MC.perform_drive(settings.DRIVE_STEP)
+                self.statistics['number_of_steps'] += 1
+            else:
+                logging.debug("6: Turning LEFT")
+                self.MC.perform_drive(settings.DRIVE_STEP)
+                self.MC.perform_spin(calculate_quarter_spin_degree(
+                    from_dir=self.next_command['from_dir'],
+                    to_dir=self.next_command['to_dir']
+                ))
+                self.MC.perform_drive(settings.DRIVE_STEP)
+                self.statistics['number_of_steps'] += 2
         elif self.next_command['command'] == "half_turn":
-            logging.error("Executing half turn command")
+            logging.error("7: Executing half turn command")
             self.MC.perform_spin(-90)
             self.MC.perform_drive(0.25, use_lane_detection=False)
             self.MC.perform_spin(-90)
+            self.statistics['number_of_steps'] += 1
+            time.sleep(2)
         self.update_self_state()
+
+    def is_in_vtl_area(self, car_pos):
+        closest_intersection = self.LOC.closest_intersection()
+
+        for int_pos in closest_intersection.get_pos():
+            distance = numpy.linalg.norm(numpy.array(car_pos) - numpy.array(int_pos))
+            return distance <= 2
+
+    @staticmethod
+    def _manhattan_distance(pos_one, pos_two):
+        return abs(pos_one[0] - pos_two[0]) + abs(pos_one[1] - pos_two[1])
+
+    def virtual_traffic_light(self):
+        self.traffic_light_state['color'] = "yellow"
+        leader = False
+
+        while True:
+            cars = {}
+            # Find all cars within VTL area of intersection
+            time.sleep(1)  # Make sure that location table is updated
+            for ip, car in self.location_table.iteritems():
+                closest = 4
+                for pos in self.LOC.closest_intersection().get_pos():
+                    mhd_current = self._manhattan_distance(car['curr_pos'], pos)
+                    mhd_previous = self._manhattan_distance(car['prev_pos'], pos)
+
+                    if mhd_current < mhd_previous:
+                        # Car is approaching intersection
+                        if mhd_current < closest and mhd_current <= 3 and mhd_current != 0:
+                            closest = mhd_current
+
+                if ip not in cars and closest <= 3:
+                    cars[ip] = closest
+
+            # Add the current car to the set of cars
+            closest = 4
+            for pos in self.LOC.closest_intersection().get_pos():
+                mhd = self._manhattan_distance(self.car['curr_pos'], pos)
+                if mhd < closest:
+                    closest = mhd
+
+            cars[self.car['ip']] = closest
+
+            logging.debug("Step 1:  Cars in VTL area: " + str(cars))
+
+            if len(cars) > 0:
+                sorted_cars = sorted(cars.items(), key=operator.itemgetter(1))
+                logging.debug("Step 2: Sorted cars: " + str(sorted_cars))
+
+                if sorted_cars[0][1] > 1:
+                    logging.debug("No cars are at the intersection yet, skipping")
+                    return
+
+                # Step 5
+                if self.is_next_pos_available():
+                    logging.debug("Step 3: Car is leader in this road")
+                    leader = True
+                else:
+                    logging.debug("Step 3: Car is follower in this road")
+                    self.traffic_light_state['color'] = "red"
+                    self.statistics['queue_time'] += 1
+                    time.sleep(1)
+                    continue
+
+                # Step 6
+                if leader:
+                    if sorted_cars[0][0] == self.car['ip']:
+                        logging.debug("Step 4: Car is closest to the intersection")
+
+                        if len(sorted_cars) > 1:
+                            send = Send(broadcast=True)
+                            self.checksum = randint(0, 255)
+                            grr_message = {'code': 'GRR', 'origin': self.car['ip'], 'checksum': self.checksum}
+                            send.send(MessageTypes.VTL, grr_message)
+                            logging.debug("Sending GRR to all cars " + str(grr_message))
+                            send.close()
+
+                            while self.vtl_ack.qsize() < len(cars) - 1:
+                                logging.debug("Waiting for ACK confirmation. Current acks: " + str(self.vtl_ack.qsize()) + " should be: " + str(len(cars) - 1))
+                                time.sleep(1)
+                                self.statistics['wait_time'] += 1
+
+                            self.traffic_light_state['color'] = "green"
+
+                            with self.vtl_ack.mutex:
+                                self.vtl_ack.queue.clear()
+                            return
+
+                        if len(sorted_cars) == 1:
+                            logging.debug("Car gets the green light")
+                            self.traffic_light_state['color'] = "green"
+                            return
+                    else:
+                        logging.debug("Step 4: Car is not closest to the intersection")
+                        self.traffic_light_state['color'] = "red"
+                        time.sleep(1)
+                        self.statistics['wait_time'] += 1
+                        continue
+            else:
+                logging.debug("Step 5: No cars within VTL area")
+                return
+
+    def is_next_pos_available(self):
+        if len(self.location_table) > 0:
+            for ip, location in self.location_table.iteritems():
+                if tuple(location['curr_pos']) == self.next_command['next_pos']:
+                    logging.error("NEXT POS IS NOT AVAILABLE")
+                    return False
+        return True
+
+    def message_handler(self, msg_type, msg):
+
+        # Update location table
+        if msg_type == MessageTypes.BEACON:
+            if msg['ip'] != self.car['ip']:
+                self.location_table[msg['ip']] = msg
+
+        # Regular traffic light messages
+        if msg_type == MessageTypes.TRAFFIC_LIGHT:
+            i_id = sum(map(sum, msg['intersection']))
+            self.traffic_light_state[i_id] = msg
+
+        # Virtual traffic light messages
+        if msg_type == MessageTypes.VTL:
+            if msg['code'] == 'GRR' and msg['origin'] != self.car['ip']:
+                # Send ACK
+                logging.debug("Received VTL GRR message: " + str(msg))
+
+                time.sleep(randint(0, 10)/10.0)
+                send = Send(broadcast=True)
+                send.send(MessageTypes.VTL, {'code': 'ACK', 'receiver': msg['origin'], 'origin': self.car['ip'], 'checksum': msg['checksum']})
+                send.close()
+                logging.debug("Sending ACK message. Checksum: " + str(msg['checksum']))
+
+            if msg['code'] == "ACK":
+                # Only append if receiver is current car and if it is a reply to current VTL (via checksum)
+                if msg['receiver'] == self.car['ip'] and self.checksum == msg['checksum']:
+                    logging.debug("Received VTL ACK message: " + str(msg))
+                    self.vtl_ack.put(msg['origin'])
 
     def update_self_state(self):
         self.car['prev_pos'] = self.car['curr_pos']
@@ -102,46 +321,18 @@ class Car:
         self.car['to_dir'] = self.next_command['to_dir']
         self.car['from_dir'] = self.next_command['from_dir']
 
-    # TODO: Refactor to UTILS
-    def calculate_quarter_spin_degree(self):
-        from_dir = self.next_command['from_dir']
-        to_dir = self.next_command['to_dir']
-
-        if from_dir == Direction.WEST:
-            if to_dir == Direction.NORTH:
-                return settings.QUARTER_TURN_DEGREES
-            return -settings.QUARTER_TURN_DEGREES
-        elif from_dir == Direction.EAST:
-            if to_dir == Direction.SOUTH:
-                return settings.QUARTER_TURN_DEGREES
-            return -settings.QUARTER_TURN_DEGREES
-        elif from_dir == Direction.NORTH:
-            if to_dir == Direction.WEST:
-                return settings.QUARTER_TURN_DEGREES
-            return -settings.QUARTER_TURN_DEGREES
-        else:
-            if to_dir == Direction.EAST:
-                return settings.QUARTER_TURN_DEGREES
-            return -settings.QUARTER_TURN_DEGREES
-
-    def message_handler(self, msg_type, msg):
-        if msg_type == MessageTypes.BEACON:
-            # Update location table with new data
-            self.location_table[msg['ip']] = msg
-            logging.info("Updated location table " + str(self.location_table))
-
-    def send_beacon(self):
+    def _send_beacon(self):
         """
         Sends a beacon broadcast message every with car info every x seconds.
         """
         send = Send(broadcast=True)
         while self.RUNNING:
-            logging.debug("Sending beacon")
             send.send(MessageTypes.BEACON, self.car)
             time.sleep(settings.BROADCAST_STEP)
+        logging.debug("Shutting down sender")
         send.close()
 
-    def receive(self):
+    def _receive(self):
         """
         Listens for broadcast messages on the network. Update location table if sender is not the same as receiver
         :return:
@@ -149,15 +340,16 @@ class Car:
         receive = Receive(self.car['ip'])
         while self.RUNNING:
             msg = receive.listen()
-
-            # Skip messages where sender is the same as receiver
-            if msg['ip'] != self.car['ip']:
-                self.message_handler(msg['message_type'], msg)
-
+            self.message_handler(msg['message_type'], msg)
+        logging.debug("Shutting down receiver")
         receive.close()
 
 
 if len(sys.argv) > 1:
-    c = Car(str(sys.argv[1]), (3, 7), 'e', 'w')
+    if sys.argv[2] == "True":
+        traffic_light = True
+    else:
+        traffic_light = False
+    c = Car(str(sys.argv[1]), (3, 11), 'e', 'w', traffic_light)
 else:
-    c = Car('192.168.1.1', (3, 7), 'e', 'w')
+    c = Car('192.168.1.1', (3, 7), 'e', 'w', False)

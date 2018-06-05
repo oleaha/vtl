@@ -1,14 +1,18 @@
-import socket, sys
+import socket
 from simulation import settings
 import logging
 import json
+
 
 class Send:
 
     def __init__(self, broadcast=False, ip=None, port=None):
         if broadcast:
             self.ip = settings.BROADCAST_IP
-            self.port = settings.BROADCAST_PORT
+            if port:
+                self.port = port
+            else:
+                self.port = settings.BROADCAST_PORT
         else:
             self.ip = ip
             self.port = port
@@ -24,7 +28,7 @@ class Send:
             msg['message_type'] = msg_type
             self.socket.sendto(json.dumps(msg), (self.ip, self.port))
         except socket.error:
-            logging.error("Could not send message")
+            logging.error("Could not send message " + str(socket.error.message))
 
     def close(self):
         self.socket.close()
